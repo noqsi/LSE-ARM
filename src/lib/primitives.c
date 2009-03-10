@@ -21,7 +21,7 @@
 */
 
 
-#include "LSE-ARM.h"
+#include "lse-arm.h"
 #include <stdlib.h>
 
 /*
@@ -463,8 +463,11 @@ void ifelse( void )
 
 /*
  * $Log$
- * Revision 1.1  2009-03-10 19:08:44  jpd
- * Initial revision
+ * Revision 1.2  2009-03-10 20:37:11  jpd
+ * Makefile, ports.
+ *
+ * Revision 1.1.1.1  2009-03-10 19:08:44  jpd
+ * Initial sources
  *
  */
 

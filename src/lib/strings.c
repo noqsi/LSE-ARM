@@ -118,27 +118,15 @@ void HexNumber( void )
 	
 	*--sp = flag = 0;   /* conversion failed */
 }
-
-/*
- * mode path fopen yields c
- */
-
-void openf( void )
-{
-	char path[MAXPATHLEN+1];
-	FILE *f;
-	
-	(void) cstring( path, MAXPATHLEN+1 );
-	f = fopen( path, cstring( NULL, 0 ));
-	*--sp = (intptr_t) f;
-	if( f ) flag = 1; else flag = 0;
-}	
 	
 
 /*
  * $Log$
- * Revision 1.1  2009-03-10 19:08:44  jpd
- * Initial revision
+ * Revision 1.2  2009-03-10 20:37:11  jpd
+ * Makefile, ports.
+ *
+ * Revision 1.1.1.1  2009-03-10 19:08:44  jpd
+ * Initial sources
  *
  */
 
