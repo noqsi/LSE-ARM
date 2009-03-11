@@ -200,8 +200,9 @@ userflag
 LSE> LSE>
 
 variables
-doPrompt loadDepth Prompter
+doPrompt Prompter
 ' nl Prompter !
+0 doPrompt !
 
 : Prompt doPrompt @ 0= || Prompter @ exec
 
@@ -277,7 +278,8 @@ DefName
 
 //XEQ cmdloop
 
-# : skip>nl -1 NextToken !
+# Indent the next definition so the comment stripper ignores it!
+	# : skip>nl -1 NextToken !
 ' # immediate
 
 :variable : :def >variable< cinit
@@ -309,12 +311,12 @@ to" : dup 1 [] 0 swap [to"] drop drop drop swap !
 [def,] : dup ,h sp dup {NAME} [] @ ,t nl {PREV} [] @ dup 0= no? &repeat
 dictionary : {deflast} {@} [def,] drop
 
-can'tLoad : drop " Load: " ,t ,t sp qm nl false
+# can'tLoad : drop " Load: " ,t ,t sp qm nl false
 
 # sa load yields c c
-load :  dup " r" swap fopen ifnot can'tLoad && \
-	swap drop in@ swap >in doPrompt @ 0 doPrompt ! \
-	loadDepth @ 1 + loadDepth ! 
+# load :  dup " r" swap fopen ifnot can'tLoad && \
+#	swap drop in@ swap >in doPrompt @ 0 doPrompt ! \
+#	loadDepth @ 1 + loadDepth ! 
 
 # Goeke style bound loops
 [setupi] : cptr @ -1 [] dup cptr ! @ ' iterate[ >code >code
@@ -355,14 +357,14 @@ StackPrompt : nl top LSE> ,t sp
 # c is a file pointer
 # saves current output on number stack
 # has to tuck it under so it can return
-out( : flush r> out@ >r >r >out
+# out( : flush r> out@ >r >r >out
 
 # restore
-)out : flush r> r> >out >r
+# )out : flush r> r> >out >r
 
 # Error output
-error( : flush r> out@ >r >r stderr >out
-)error : flush r> r> >out >r
+# error( : flush r> out@ >r >r stderr >out
+# )error : flush r> r> >out >r
 
 # Move and fill
 
@@ -402,8 +404,8 @@ textend : text dup @ 1 + []
 # Parse a character
 # char xyz yields x
 # Literal representing first character of following token
-charror : error( " char can't find a character to parse" ,t nl \
-	)error :bail abort
+charror : " char can't find a character to parse" ,t nl \
+	 :bail abort
 char : <token? ifnot charror text 1 [] @ >constant< >code
 ' char immediate
 
@@ -433,13 +435,15 @@ scopy : swap dup @ 1 + swap rot move
 # HAVE_SEQ_PORT && " Sequencer interface is available." t
 
 # First command line arg is a file to load
-1 arg ifelse load drop
+# 1 arg ifelse load drop
 
-# We now return you to your regularly scheduled input stream...
-stdin >in 1 doPrompt !
+# End of initialization.
 
 
 # $Log$
+# Revision 1.3  2009-03-11 03:20:28  jpd
+# This version runs!
+#
 # Revision 1.2  2009-03-11 02:19:42  jpd
 # It compiles, executes.
 # Prompt doesn't work.
@@ -447,88 +451,4 @@ stdin >in 1 doPrompt !
 #
 # Revision 1.1.1.1  2009-03-10 19:08:44  jpd
 # Initial sources
-#
-# Revision 1.3  2006/09/09 15:58:13  jpd
-# Release 0.3 with license and copyright notices
-#
-# Revision 1.2  2006/02/09 20:30:46  jpd
-# Less chatter on startup, for scripting.
-#
-# Revision 1.1  2005/07/03 15:37:19  jpd
-# *** empty log message ***
-#
-# Revision 1.22  2005/04/23 18:03:39  jpd
-# Flush output when switching.
-#
-# Revision 1.21  2005/04/21 17:16:15  jpd
-# Output redirection.
-#
-# Revision 1.20  2005/04/21 16:28:12  jpd
-# char to quote single characters in LSE
-# FITS character string records
-# seqbusy in SeqStub
-#
-# Revision 1.19  2005/04/12 21:23:05  jpd
-# String move/increment
-#
-# Revision 1.18  2005/04/01 19:20:34  jpd
-# move, fill, text buffer stuff
-#
-# Revision 1.17  2005/03/29 22:12:46  jpd
-# Added @@+ and then. Fixed naming process so heritage is possible.
-#
-# Revision 1.16  2005/03/02 02:10:53  jpd
-# Argument processing.
-# First arg is a file to load.
-#
-# Revision 1.15  2005/02/28 22:44:40  jpd
-# A bit of cleanup, simplification.
-#
-# Revision 1.14  2005/01/18 22:13:18  jpd
-# Finished the basic tutorial.
-#
-# Revision 1.13  2004/12/23 21:11:52  jpd
-# Prompter is now a variable. The default shows stack top.
-#
-# Revision 1.12  2004/12/23 20:41:09  jpd
-# Doc fixes
-# Improved stack dump
-#
-# Revision 1.11  2004/11/13 00:05:21  jpd
-# Sequencer wrapper compiles on Linux.
-#
-# Revision 1.10  2004/11/12 04:20:45  jpd
-# Prompt after undefined word rejected.
-#
-# Revision 1.9  2004/11/12 03:12:22  jpd
-# Fixed bug in #
-# Updated doc
-#
-# Revision 1.8  2004/10/09 16:06:34  jpd
-# Fixed a bunch of hanging issues.
-# Now have a strict interpreter for debugging.
-# Bad compilation no longer leaves a def behind.
-# Interrupts and aborts work.
-# error( and )error for messages to stdout.
-#
-# Revision 1.7  2004/09/25 00:06:18  jpd
-# Fix conditional comedi binding, minor bug in \
-#
-# Revision 1.6  2004/09/24 21:47:57  jpd
-# Implemented iterate and helpers.
-# Can now check for COMEDI.
-#
-# Revision 1.5  2004/09/23 15:06:38  jpd
-# Added file operations.
-#
-# Revision 1.4  2004/09/19 20:56:06  jpd
-# Getting really usable!
-# First cut at comedi.
-#
-# Revision 1.3  2004/09/19 01:24:48  jpd
-# Compiler bugs fixed.
-# Now using fast ITC interpreter.
-#
-# Revision 1.2  2004/09/17 20:57:25  jpd
-# Have working compiler.
 #

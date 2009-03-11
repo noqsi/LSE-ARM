@@ -34,23 +34,19 @@
 char *cstring( char *b, int n )
 {
 	cell *s = (cell *)(intptr_t)*sp++;
-	int nc, nseg, i;
-	wchar_t wb[MAXPATHLEN+1], *wbp;
+	int nc;
 	static char sb[MAXPATHLEN+1];
 	char *bp;
 	
 	if( !b ) { b = sb; n = MAXPATHLEN+1; }  /* use the static buffer */
-	b[--n] = 0;								/* force null termination */
 	bp = b;
 	
-	for( nc = *s++; nc > 0; nc -= MAXPATHLEN ) {
-		if( nc > MAXPATHLEN ) nseg = MAXPATHLEN; else nseg = nc;
-		wbp = wb;
-		for( i = 0; i < nseg; i += 1 ) *wbp++ = *s++;
-		*wbp++ = 0;
-		n -= wcstombs( bp, wb, n );
-		if( n <= 0 ) break;
+	for( nc = *s++; nc > 0; nc -= 1 ) {
+		*bp++ = *s++;
+		n -= 1;
+		if( n <= 1 ) break;
 	}
+	*bp = 0;
 	return b;
 }
 
@@ -112,6 +108,9 @@ void HexNumber( void )
 
 /*
  * $Log$
+ * Revision 1.4  2009-03-11 03:20:28  jpd
+ * This version runs!
+ *
  * Revision 1.3  2009-03-11 02:19:42  jpd
  * It compiles, executes.
  * Prompt doesn't work.
