@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
+cell stack[STACK_DIM], rstack[RSTACK_DIM], compile_buf[CBUF_DIM],
+	defmem[DEFMEM_DIM], constmem[CONSTMEM_DIM];
 
-cell	*stack,		/* base of stack */
-        *sp,		/* top active item */
-        *rstack,	/* base of return stack */
+cell	*sp,		/* top active item */
         *rsp,		/* top active return stack item */
         *lc,		/* interpreter's location counter */
 	*deftop,	/* top of definition dictionary */
@@ -79,7 +79,7 @@ void interrupt( int sig )
 
 void xeq( void )
 {
-	volatile cell *savedlc = ((cell *) (intptr_t) *(lc+1)) + D_BODY - 1;
+	cell * volatile savedlc = ((cell *) (intptr_t) *(lc+1)) + D_BODY - 1;
 
 	switch( setjmp( rexeq )) {
 	/* here's where to have different actions for different aborts */
@@ -96,10 +96,13 @@ void xeq( void )
 
 void setup_memory( void )
 {
-    sp = stack + STACK_DIM;
-    rsp = rstack + RSTACK_DIM;
+    	sp = stack + STACK_DIM;
+    	rsp = rstack + RSTACK_DIM;
+	deftop = defmem;
 	deflast = 0;
+	constop = constmem;
 	constlast = 0;
+	cbuf = (cell) compile_buf;
 }
 
 
@@ -228,9 +231,6 @@ void build_primitives( void )
     build_primitive( fast, "fast" );
     build_primitive( abort, "abort" );
     build_primitive( ifelse, "ifelse" );
-    build_primitive( argc, "argc" );
-    build_primitive( arg, "arg" );
-    build_primitive( now, "now" );
 
 /*
  * VM/dictionary "registers":
@@ -284,7 +284,7 @@ void bootcompile( void )
 	for( skip_space(); flag; skip_space() ) {
 		get_name();
 		find();
-		if( !flag ) bootabort();
+//		if( !flag ) {printf( "not found \n"); exit(1);}
 		*--sp = (cell) &cptr; append();
 	}
 	ascii_to_literal( "exit" );
@@ -332,7 +332,7 @@ void bootstrap( void )
  
  
 
-int main( int argc, char *argv[] )
+void lse_main( void )
 {
     setup_memory();
     build_primitives();
@@ -341,6 +341,11 @@ int main( int argc, char *argv[] )
 
 /*
  * $Log$
+ * Revision 1.3  2009-03-11 02:19:42  jpd
+ * It compiles, executes.
+ * Prompt doesn't work.
+ * OS hooks need removal.
+ *
  * Revision 1.2  2009-03-10 20:37:11  jpd
  * Makefile, ports.
  *

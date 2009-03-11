@@ -205,16 +205,17 @@ doPrompt loadDepth Prompter
 
 : Prompt doPrompt @ 0= || Prompter @ exec
 
-: bye nl 0 sysexit
+# : bye nl 0 sysexit
 
 # popin does a bye if at top input level,
 # otherwise restores previously stacked input stream.
-: popin loadDepth @ dup 0= if bye in@ fclose 1 - loadDepth ! doPrompt ! >in
+# : popin loadDepth @ dup 0= if bye in@ fclose 1 - loadDepth ! doPrompt ! >in
 
 # The (unbound) command loop
 # The extra level is to insure that the repeat has a place to look
 # for its word's identity.
-: [cmdloop] Prompt compiler eof? if popin repeat
+# : [cmdloop] Prompt compiler eof? if popin repeat
+: [cmdloop] Prompt compiler repeat
 : cmdloop [cmdloop]
 
 # wa c >precedence yields nothing
@@ -439,8 +440,13 @@ stdin >in 1 doPrompt !
 
 
 # $Log$
-# Revision 1.1  2009-03-10 19:08:44  jpd
-# Initial revision
+# Revision 1.2  2009-03-11 02:19:42  jpd
+# It compiles, executes.
+# Prompt doesn't work.
+# OS hooks need removal.
+#
+# Revision 1.1.1.1  2009-03-10 19:08:44  jpd
+# Initial sources
 #
 # Revision 1.3  2006/09/09 15:58:13  jpd
 # Release 0.3 with license and copyright notices

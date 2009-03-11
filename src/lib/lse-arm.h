@@ -26,11 +26,11 @@
 typedef int32_t cell;
 typedef float fcell;
 
-extern cell	*stack,		/* base of stack */
-        *sp,		/* top active item */
-        *rstack,	/* base of return stack */
-        *rsp,		/* top active return stack item */
-        *lc,		/* interpreter's location counter */
+extern cell stack[], rstack[];
+
+extern cell	*sp,		/* top active item */
+        	*rsp,		/* top active return stack item */
+       		*lc,		/* interpreter's location counter */
 		*deftop,	/* top of definition dictionary */
 		*deflast,   /* last entry in definition dictionary */
 		*constop,   /* top of constant dictionary */
@@ -69,11 +69,11 @@ extern cell cbuf;		/* loc of compile buffer */
  * These should eventually be configured based on host resources
  */
  
-#define	STACK_DIM	1024
-#define RSTACK_DIM	1024
-#define	DEFMEM_DIM		(8*1024*1024)
-#define CONSTMEM_DIM	(1024*1024)
-#define CBUF_DIM	1024
+#define	STACK_DIM	64
+#define RSTACK_DIM	64
+#define	DEFMEM_DIM	3000
+#define CONSTMEM_DIM	3000
+#define CBUF_DIM	160
 
 /*
  * Primitive functions
@@ -105,8 +105,13 @@ char *cstring( char *b, int n );
 
 /*
  * $Log$
- * Revision 1.1  2009-03-10 19:08:44  jpd
- * Initial revision
+ * Revision 1.2  2009-03-11 02:19:42  jpd
+ * It compiles, executes.
+ * Prompt doesn't work.
+ * OS hooks need removal.
+ *
+ * Revision 1.1.1.1  2009-03-10 19:08:44  jpd
+ * Initial sources
  *
  */
 

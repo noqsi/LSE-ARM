@@ -23,6 +23,9 @@
 
 #include "lse-arm.h"
 #include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+#include <ctype.h>
 
 /*
  * Basic memory access
@@ -183,8 +186,15 @@ extern char init_lse[], app_lse[];
 void get( void )
 {
 	static char* mem = init_lse;
-	static state = 0;	/* 0 = init, 1 = app, 2 = input */
+	static int state = 0;	/* 0 = init, 1 = app, 2 = input */
 	char c;
+	
+	if( have_ungotten ) {
+		*--sp = ungotten;
+		flag = 1;
+		have_ungotten = 0;
+		return;
+	}
 	
 	switch( state ) {
 	
@@ -220,7 +230,7 @@ void skip_space( void )
 	for(;;){
 		get();
 		if( !flag ) { drop(); return; }
-		if( !iswspace( *sp )) {
+		if( !isspace( *sp )) {
 			unget();
 			flag = 1;
 			return;
@@ -253,7 +263,7 @@ void get_token( void )
 	for( n = 0;; n += 1) {
 		get();
 		if( !flag ) break;
-		if( iswspace( *sp ) ) break;
+		if( isspace( *sp ) ) break;
 		constop[ D_DATA + 1 + n ] = *sp++;
 	}
 	constop[ D_DATA ] = n;
@@ -397,6 +407,18 @@ void compile_to_buffer( void )
 	cptr = cbuf;
 }
 
+/*
+ * Send a C string to output.
+ */
+
+static void put_c_string( char *s ) { 
+	while( *s ) {
+		*--sp = *s++;
+		put(); 
+	}
+}
+
+
 void putd( void ) 
 { char buf[16]; (void) snprintf( buf, 16, "%d", *sp++); put_c_string( buf );}
 void putx( void ) 
@@ -426,19 +448,19 @@ void fussy( void )
 	befussy = 1;
 	while( befussy ) {
 		if( sp > stack + STACK_DIM ) {
-			fprintf( stderr, "Stack underflow!\n" );
+			put_c_string( "Stack underflow!\n" );
 			abort();
 		}
 		if( sp < stack ) {
-			fprintf( stderr, "Stack overflow!\n" );
+			put_c_string( "Stack overflow!\n" );
 			abort();
 		}
 		if( rsp > rstack + RSTACK_DIM ) {
-			fprintf( stderr, "Return stack underflow!\n" );
+			put_c_string( "Return stack underflow!\n" );
 			abort();
 		}
 		if( rsp < rstack ) {
-			fprintf( stderr, "Return stack overflow!\n" );
+			put_c_string( "Return stack overflow!\n" );
 			abort();
 		}
 		(*(prim *)(intptr_t)*(cell *)(intptr_t)(*++lc))();
@@ -463,6 +485,11 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.3  2009-03-11 02:19:42  jpd
+ * It compiles, executes.
+ * Prompt doesn't work.
+ * OS hooks need removal.
+ *
  * Revision 1.2  2009-03-10 20:37:11  jpd
  * Makefile, ports.
  *

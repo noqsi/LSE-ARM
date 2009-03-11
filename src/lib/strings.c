@@ -25,16 +25,6 @@
 #include <sys/param.h>
 #include <stdlib.h>
 
-/*
- * Send a C string to output.
- */
-
-static void put_c_string( char *s ) { 
-	while( *s ) {
-		*--sp = *s++;
-		put(); 
-	}
-}
 
 /*
  * cstring() pops an LSE string pointer from the stack, returning
@@ -122,6 +112,11 @@ void HexNumber( void )
 
 /*
  * $Log$
+ * Revision 1.3  2009-03-11 02:19:42  jpd
+ * It compiles, executes.
+ * Prompt doesn't work.
+ * OS hooks need removal.
+ *
  * Revision 1.2  2009-03-10 20:37:11  jpd
  * Makefile, ports.
  *
