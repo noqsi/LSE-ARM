@@ -103,8 +103,17 @@ void build_named_constant( cell c, char *name );
 /* strings.c stuff */
 char *cstring( char *b, int n );
 
+/* other inter-source links */
+
+void interrupt( int sig );
+void put_c_string( char *s );
+
+
 /*
  * $Log$
+ * Revision 1.3  2009-03-11 03:43:59  jpd
+ * Fix abort handling.
+ *
  * Revision 1.2  2009-03-11 02:19:42  jpd
  * It compiles, executes.
  * Prompt doesn't work.

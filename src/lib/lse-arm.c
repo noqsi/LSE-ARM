@@ -83,6 +83,9 @@ void xeq( void )
 
 	switch( setjmp( rexeq )) {
 	/* here's where to have different actions for different aborts */
+	
+	case 1 : put_c_string( "Aborted!\n" );
+		break;
 	default:
 		break;
 	}
@@ -341,6 +344,9 @@ void lse_main( void )
 
 /*
  * $Log$
+ * Revision 1.4  2009-03-11 03:43:59  jpd
+ * Fix abort handling.
+ *
  * Revision 1.3  2009-03-11 02:19:42  jpd
  * It compiles, executes.
  * Prompt doesn't work.

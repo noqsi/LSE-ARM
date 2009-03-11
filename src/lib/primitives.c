@@ -411,7 +411,7 @@ void compile_to_buffer( void )
  * Send a C string to output.
  */
 
-static void put_c_string( char *s ) { 
+void put_c_string( char *s ) { 
 	while( *s ) {
 		*--sp = *s++;
 		put(); 
@@ -449,19 +449,19 @@ void fussy( void )
 	while( befussy ) {
 		if( sp > stack + STACK_DIM ) {
 			put_c_string( "Stack underflow!\n" );
-			abort();
+			interrupt( 1 );
 		}
 		if( sp < stack ) {
 			put_c_string( "Stack overflow!\n" );
-			abort();
+			interrupt( 1 );
 		}
 		if( rsp > rstack + RSTACK_DIM ) {
 			put_c_string( "Return stack underflow!\n" );
-			abort();
+			interrupt( 1 );
 		}
 		if( rsp < rstack ) {
 			put_c_string( "Return stack overflow!\n" );
-			abort();
+			interrupt( 1 );
 		}
 		(*(prim *)(intptr_t)*(cell *)(intptr_t)(*++lc))();
 	}
@@ -485,6 +485,9 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.4  2009-03-11 03:43:59  jpd
+ * Fix abort handling.
+ *
  * Revision 1.3  2009-03-11 02:19:42  jpd
  * It compiles, executes.
  * Prompt doesn't work.
