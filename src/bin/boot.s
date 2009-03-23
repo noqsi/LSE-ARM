@@ -3,7 +3,7 @@
 @ Startup for C code on SAM7X
 @
 
-@ this version reboots on any exception or interrupt
+@ this version restarts on any exception or interrupt
 
 .section .text
 .code 32
@@ -36,6 +36,9 @@ stack_pointer:		.word _stack_top
 			.end
 @
 @ $Log$
+@ Revision 1.2  2009-03-23 02:42:04  jpd
+@ Version for TESS hardware.
+@
 @ Revision 1.1  2009-03-14 22:58:06  jpd
 @ Can now run LSE in an ARM SAM7X!
 @

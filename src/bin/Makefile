@@ -16,17 +16,28 @@ LSE = boot.o C_startup.o lse.o usart.o
 
 HDR = memory.h  peripheral_id.h  pio.h  pmc.h  usart.h  wdt.h usart_driver.h
 
-all : lse.elf
+all : lse.elf TESScamera.elf
 
-$(OBJS): $(HDR) Makefile
+$(LSE): $(HDR) Makefile
 
 lse.elf: $(LSE) sam7x256-exec-flash.ld
 	arm-elf-gcc $(LDFLAGS) -o $@ $(LSE) $(LIBS)
+	
+TESS = boot.o C_startup.o TESScamera.o TESSusart.o
+TESSHDR = $(HDR)
+
+$(TESS): $(TESSHDR) Makefile
+
+TESScamera.elf: $(TESS) sam7x256-exec-flash.ld
+	arm-elf-gcc $(LDFLAGS) -o $@ $(TESS) $(LIBS)
 
 clean:
 	rm -f *.o *.elf
 
 # $Log$
+# Revision 1.2  2009-03-23 02:42:04  jpd
+# Version for TESS hardware.
+#
 # Revision 1.1  2009-03-14 22:58:06  jpd
 # Can now run LSE in an ARM SAM7X!
 #
