@@ -1,12 +1,17 @@
 # $Id$
 
-AS = as
-CC = gcc
-AR = ar
+AS = arm-elf-as
+CC = arm-elf-gcc
+AR = arm-elf-ar
 CFLAGS = -g -Wall
 
-%.o : %.S
+%.o : %.s
 	$(AS) -o $@ $<
+
+# strip // style comments because arm-elf-as different from as
+
+%.s : %.S
+	sed -e 's/\/\/.*$//' <$< >$@
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -27,6 +32,9 @@ test : testmain.o liblse-arm.a
 	$(CC)  testmain.o -o test -L. -llse-arm -lm
 
 # $Log$
+# Revision 1.4  2009-03-26 01:26:22  jpd
+# Better factoring.
+#
 # Revision 1.3  2009-03-11 03:20:28  jpd
 # This version runs!
 #

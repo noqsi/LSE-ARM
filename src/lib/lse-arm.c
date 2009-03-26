@@ -335,15 +335,23 @@ void bootstrap( void )
  
  
 
-void lse_main( void )
+void lse_init( void )
 {
     setup_memory();
     build_primitives();
+}
+
+
+void lse_main( void )
+{
     bootstrap();
 }
 
 /*
  * $Log$
+ * Revision 1.5  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
  * Revision 1.4  2009-03-11 03:43:59  jpd
  * Fix abort handling.
  *

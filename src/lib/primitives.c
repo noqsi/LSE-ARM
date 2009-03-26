@@ -157,11 +157,15 @@ void cells( void ) { cell w = *sp++; *sp += w * sizeof( cell ); }   /* offset by
 
 /*
  * Character I/O
- */    
+ */  
+ 
+extern char init_lse[], app_lse[], readchar( void );
+extern void writechar( char c );
+  
 
 void put( void )
 {
-    putchar( *sp++ );
+    writechar( *sp++ );
 	flag = 1;
 }
 
@@ -179,8 +183,6 @@ void unget( void )
 	ungotten = *sp++;
 	flag = 1;
 }
-
-extern char init_lse[], app_lse[];
 
 
 void get( void )
@@ -211,7 +213,7 @@ void get( void )
 		}
 		state = 3;	/* fall through */
 		
-	case 3:	c = getchar();
+	case 3:	c = readchar();
 	
 	}  	
 
@@ -420,11 +422,11 @@ void put_c_string( char *s ) {
 
 
 void putd( void ) 
-{ char buf[16]; (void) snprintf( buf, 16, "%d", *sp++); put_c_string( buf );}
+{ char buf[16]; (void) snprintf( buf, 16, "%d", (int)*sp++); put_c_string( buf );}
 void putx( void ) 
-{ char buf[16]; (void) snprintf( buf, 16, "%x", *sp++);  put_c_string( buf );}
+{ char buf[16]; (void) snprintf( buf, 16, "%x", (unsigned)*sp++);  put_c_string( buf );}
 void putf( void ) 
-{ char buf[16]; (void) snprintf( buf, 16, "%g", *(fcell *)sp++ ); put_c_string( buf );}
+{ char buf[100]; (void) snprintf( buf, 100, "%g", (double) *(fcell*)sp++ ); put_c_string( buf );}
 
 void depth( void ) { cell w = stack - sp + STACK_DIM; *--sp = w; }
 
@@ -485,6 +487,9 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.5  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
  * Revision 1.4  2009-03-11 03:43:59  jpd
  * Fix abort handling.
  *

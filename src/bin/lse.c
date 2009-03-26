@@ -11,6 +11,7 @@
 #include "peripheral_id.h"
 #include "usart_driver.h"
 
+void lse_init( void );
 void lse_main( void );
 
 /*
@@ -93,11 +94,16 @@ because it uses a static table.
 void app_main()
 {
 	usart_init( 0 );
+	lse_init();
+	/* build application primitives here */
 	lse_main();
 }
 
 /*
  * $Log$
+ * Revision 1.2  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
  * Revision 1.1  2009-03-14 22:58:06  jpd
  * Can now run LSE in an ARM SAM7X!
  *

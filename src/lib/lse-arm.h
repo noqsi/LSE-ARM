@@ -71,9 +71,10 @@ extern cell cbuf;		/* loc of compile buffer */
  
 #define	STACK_DIM	64
 #define RSTACK_DIM	64
-#define	DEFMEM_DIM	3000
-#define CONSTMEM_DIM	3000
+#define	DEFMEM_DIM	6000
+#define CONSTMEM_DIM	6000
 #define CBUF_DIM	160
+#define STRINGBUF_DIM	200
 
 /*
  * Primitive functions
@@ -111,6 +112,9 @@ void put_c_string( char *s );
 
 /*
  * $Log$
+ * Revision 1.4  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
  * Revision 1.3  2009-03-11 03:43:59  jpd
  * Fix abort handling.
  *

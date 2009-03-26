@@ -11,6 +11,7 @@
 #include "peripheral_id.h"
 #include "usart_driver.h"
 
+void lse_init( void );
 void lse_main( void );
 
 /*
@@ -89,11 +90,15 @@ because it uses a static table.
 void app_main()
 {
 	usart_init( 0 );
+	lse_init();
 	lse_main();
 }
 
 /*
  * $Log$
+ * Revision 1.2  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
  * Revision 1.1  2009-03-23 02:42:04  jpd
  * Version for TESS hardware.
  *

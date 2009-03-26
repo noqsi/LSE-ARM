@@ -35,10 +35,10 @@ char *cstring( char *b, int n )
 {
 	cell *s = (cell *)(intptr_t)*sp++;
 	int nc;
-	static char sb[MAXPATHLEN+1];
+	static char sb[STRINGBUF_DIM+1];
 	char *bp;
 	
-	if( !b ) { b = sb; n = MAXPATHLEN+1; }  /* use the static buffer */
+	if( !b ) { b = sb; n = STRINGBUF_DIM+1; }  /* use the static buffer */
 	bp = b;
 	
 	for( nc = *s++; nc > 0; nc -= 1 ) {
@@ -108,6 +108,9 @@ void HexNumber( void )
 
 /*
  * $Log$
+ * Revision 1.5  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
  * Revision 1.4  2009-03-11 03:20:28  jpd
  * This version runs!
  *
