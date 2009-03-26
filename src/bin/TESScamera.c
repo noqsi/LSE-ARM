@@ -13,6 +13,7 @@
 
 void lse_init( void );
 void lse_main( void );
+void SeqPrimitives( void );
 
 /*
 Provide an "application". Placeholder.
@@ -91,11 +92,16 @@ void app_main()
 {
 	usart_init( 0 );
 	lse_init();
+	SeqPrimitives();	/* setup the seq words */
 	lse_main();
 }
 
 /*
  * $Log$
+ * Revision 1.3  2009-03-26 02:26:04  jpd
+ * Init seq words.
+ * Fix ambiguous stack op.
+ *
  * Revision 1.2  2009-03-26 01:26:22  jpd
  * Better factoring.
  *

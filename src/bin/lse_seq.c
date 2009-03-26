@@ -9,7 +9,8 @@
 
 void readSeq( void )
 {
-	*--sp = (cell) sequencer_read( (int) *sp++ );
+	int d = sequencer_read( (int) *sp++ );
+	*--sp = (cell) d;
 }
 
 /*
@@ -41,10 +42,16 @@ void SeqPrimitives( void )		/* put 'em in the LSE dictionary */
 	build_primitive( readSeq, "readSeq" );
 	build_primitive( writeSeq, "writeSeq" );
 	build_primitive( goSeq, "goSeq" );
+	
+	sequencer_port_setup();		/* and init the port */
 }
 
 /*
  * $Log$
+ * Revision 1.3  2009-03-26 02:26:04  jpd
+ * Init seq words.
+ * Fix ambiguous stack op.
+ *
  * Revision 1.2  2009-03-26 02:10:13  jpd
  * Can now compile seq stuff.
  *
