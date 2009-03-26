@@ -8,5 +8,6 @@ void writechar( char c ){ putchar( c ); }
 
 main()
 {
+	lse_init();
 	lse_main();
 }

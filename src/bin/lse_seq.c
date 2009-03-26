@@ -1,7 +1,7 @@
 /* $Id$ */
 
 #include "sequencer.h"
-#include "lse.h"
+#include "lse-arm.h"
 
 /*
  * addr SeqRead yields data
@@ -45,6 +45,9 @@ void SeqPrimitives( void )		/* put 'em in the LSE dictionary */
 
 /*
  * $Log$
+ * Revision 1.2  2009-03-26 02:10:13  jpd
+ * Can now compile seq stuff.
+ *
  * Revision 1.1  2009-03-26 01:45:01  jpd
  * First draft of sequencer driver.
  *

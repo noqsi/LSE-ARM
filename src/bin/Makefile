@@ -1,6 +1,6 @@
 # $Id$
 
-CFLAGS  = -g -O -I. -mcpu=arm7tdmi -Wall -DCOPY_STATIC=1
+CFLAGS  = -g -O -I. -I../lib -mcpu=arm7tdmi -Wall -DCOPY_STATIC=1
 
 ASFLAGS = -mcpu=arm7tdmi -gstabs
 LDFLAGS = -Tsam7x256-exec-flash.ld -nostartfiles -Lgcc -L../lib 
@@ -24,7 +24,7 @@ lse.elf: $(LSE) sam7x256-exec-flash.ld
 	arm-elf-gcc $(LDFLAGS) -o $@ $(LSE) $(LIBS)
 	
 TESS = boot.o C_startup.o TESScamera.o TESSusart.o lse_seq.o sequencer.o
-TESSHDR = $(HDR)
+TESSHDR = $(HDR) usart.h usart_driver.h sequencer.h sequencer_bits.h
 
 $(TESS): $(TESSHDR) Makefile
 
@@ -35,6 +35,9 @@ clean:
 	rm -f *.o *.elf
 
 # $Log$
+# Revision 1.4  2009-03-26 02:10:13  jpd
+# Can now compile seq stuff.
+#
 # Revision 1.3  2009-03-26 01:50:16  jpd
 # Add seq driver.
 #

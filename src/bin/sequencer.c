@@ -1,7 +1,15 @@
 /* $Id$ */
 
+#include "memory.h"
+#include "pio.h"
+#include "pmc.h"
+#include "peripheral_id.h"
+#include "sequencer.h"
+#include "sequencer_bits.h"
+
 void sequencer_port_setup( void )
 {
+	PMC->pcer = bit(PIOB_ID);	/* enable PIOB clock */
 	PIOB->codr = SEQ_INPUTS;	/* We'll drive 'em to zero to start */
 	PIOB->oer = SEQ_INPUTS;		/* seq inputs are proc outputs */
 	PIOB->odr = SEQ_OUTPUTS | SEQ_DATA;
@@ -30,12 +38,12 @@ static void inline busywait( void )
 }
 
 /*
- * Wait for both ACK and CMD_FIFO_FULL deasserted */
+ * Wait for both ACK and CMD_FIFO_FULL deasserted 
  */
 
 static void inline fifowait( void )
 {
-	while((PIOB->pdsr & (SEQ_ACK | SEQ_CMD_FIFO_FULL));
+	while((PIOB->pdsr & (SEQ_ACK | SEQ_CMD_FIFO_FULL)));
 }
 
 
@@ -57,7 +65,7 @@ int sequencer_read( int addr )
 	return PIOB->pdsr & SEQ_DATA;
 }
 
-#define min(x,y)	(((x)<(y)):(x):(y))
+#define min(x,y)	(((x)<(y))?(x):(y))
 
 void sequencer_go( int start_block, int blocks, int count )
 {
@@ -67,7 +75,7 @@ void sequencer_go( int start_block, int blocks, int count )
 		while( count > 0 ) {
 			int c = min( 8, count );
 			fifowait();
-			PIOB->odsr = (start_block<<3) | (c-1)
+			PIOB->odsr = (start_block<<3) | (c-1) |
 				(SEQ_CMD_DAT<<SEQ_ADDR_SHIFT) | SEQ_STR;
 			count -= c;
 			ackwait();
@@ -80,7 +88,7 @@ void sequencer_go( int start_block, int blocks, int count )
 			int n = blocks;
 			while( n-- ) {
 				fifowait();
-				PIOB->odsr = (b++<<3)
+				PIOB->odsr = (b++<<3) |
 				(SEQ_CMD_DAT<<SEQ_ADDR_SHIFT) | SEQ_STR;
 				ackwait();
 			}
@@ -91,6 +99,9 @@ void sequencer_go( int start_block, int blocks, int count )
 
 /*
  * $Log$
+ * Revision 1.2  2009-03-26 02:10:13  jpd
+ * Can now compile seq stuff.
+ *
  * Revision 1.1  2009-03-26 01:45:01  jpd
  * First draft of sequencer driver.
  *
