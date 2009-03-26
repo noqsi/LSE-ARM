@@ -23,7 +23,7 @@ $(LSE): $(HDR) Makefile
 lse.elf: $(LSE) sam7x256-exec-flash.ld
 	arm-elf-gcc $(LDFLAGS) -o $@ $(LSE) $(LIBS)
 	
-TESS = boot.o C_startup.o TESScamera.o TESSusart.o
+TESS = boot.o C_startup.o TESScamera.o TESSusart.o lse_seq.o sequencer.o
 TESSHDR = $(HDR)
 
 $(TESS): $(TESSHDR) Makefile
@@ -35,6 +35,9 @@ clean:
 	rm -f *.o *.elf
 
 # $Log$
+# Revision 1.3  2009-03-26 01:50:16  jpd
+# Add seq driver.
+#
 # Revision 1.2  2009-03-23 02:42:04  jpd
 # Version for TESS hardware.
 #
