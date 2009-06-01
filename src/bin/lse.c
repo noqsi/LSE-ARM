@@ -8,6 +8,7 @@
 #include "pio.h"
 #include "wdt.h"
 #include "pmc.h"
+#include "rstc.h"
 #include "peripheral_id.h"
 #include "usart_driver.h"
 
@@ -66,6 +67,12 @@ you'll need to fiddle with PRES and/or the PLL.
 	PMC->mckr = CSS_MAIN;
 
 /*
+Enable reset via NRST pin.
+*/
+
+	RSTC->mr = RSTC_KEY | URSTEN;
+
+/*
 Turn on peripheral clocks, as needed.
 */
 
@@ -101,6 +108,10 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.3  2009-06-01 16:54:19  jpd
+ * Installation instructions.
+ * Fix line editing, allow external reset.
+ *
  * Revision 1.2  2009-03-26 01:26:22  jpd
  * Better factoring.
  *

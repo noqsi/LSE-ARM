@@ -352,6 +352,10 @@ top : depth 4 > ifelse StackDeep stack
 StackPrompt : nl top LSE> ,t sp
 ' StackPrompt Prompter !
 
+# Prompt with just DC2 for file input
+File{ : 0 doPrompt ! 18 FlowPrompt !
+}File : 1 doPrompt ! -1 FlowPrompt !
+
 # Output redirect
 # c out( yields nothing
 # c is a file pointer
@@ -441,6 +445,10 @@ scopy : swap dup @ 1 + swap rot move
 
 
 # $Log$
+# Revision 1.4  2009-06-01 16:54:19  jpd
+# Installation instructions.
+# Fix line editing, allow external reset.
+#
 # Revision 1.3  2009-03-11 03:20:28  jpd
 # This version runs!
 #

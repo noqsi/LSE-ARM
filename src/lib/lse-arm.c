@@ -280,6 +280,10 @@ void build_primitives( void )
     build_named_constant( (cell) interpret, "interpret" );
     build_named_constant( 0, "0" );
     build_named_constant( 1, "1" );
+    
+/* Low level line prompt character */
+
+    build_named_constant( (cell) &FlowPrompt, "FlowPrompt" );
 }
     
 void bootcompile( void )
@@ -349,6 +353,10 @@ void lse_main( void )
 
 /*
  * $Log$
+ * Revision 1.6  2009-06-01 16:54:19  jpd
+ * Installation instructions.
+ * Fix line editing, allow external reset.
+ *
  * Revision 1.5  2009-03-26 01:26:22  jpd
  * Better factoring.
  *

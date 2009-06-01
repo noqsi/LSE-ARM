@@ -184,41 +184,70 @@ void unget( void )
 	flag = 1;
 }
 
+#define INBUFSZ 256
+
+cell FlowPrompt = -1;			/* if >= 0, prompt lines with this */
 
 void get( void )
 {
 	static char* mem = init_lse;
-	static int state = 0;	/* 0 = init, 1 = app, 2 = input */
-	char c;
+	static int inited = 0;		/* If 0, reading from init_lse code */
+	static char inbuf[INBUFSZ];
+	
+	flag = 1;	/* assume success */
 	
 	if( have_ungotten ) {
 		*--sp = ungotten;
-		flag = 1;
 		have_ungotten = 0;
 		return;
 	}
-	
-	switch( state ) {
-	
-	case 0:	if( *mem ) {
-			c = *mem++;
-			break;
+		
+	if( !inited ) {		/* build LSE itself */
+		if( *mem ) {
+			*--sp = *mem++;
+			return;
 		}
 		mem = app_lse;	/* now build app */
-		state = 2;	/* fall through */
+		inited = 1;
+	}
 		
-	case 2:	if( *mem ) {
-			c = *mem++;
-			break;
-		}
-		state = 3;	/* fall through */
+	if( !*mem ) {
 		
-	case 3:	c = readchar();
+		/* If we get here, there is no more input in memory,
+		so grab a line from the input stream */
+		
+		if( FlowPrompt >= 0 ) writechar( FlowPrompt );
 	
-	}  	
-
-	*--sp = c;
-	flag = 1;
+		for( mem = inbuf;; ) {
+			char c = readchar();
+			
+			if( c == '\n' ) {	/* end of line */
+				*mem++ = c;
+				*mem++ = 0;
+				mem = inbuf;
+				break;
+			}
+			
+			if( c == '\b' ) {
+				writechar( ' ' );
+				if( mem > inbuf ) {	/* backspace, erase last */
+					writechar( '\b' );
+					mem -= 1;
+				}
+				continue;
+			}
+			
+			if( mem >= inbuf + INBUFSZ - 3 ) {	/* buffer full */
+				writechar( 7 );			/* bell */
+				continue;
+			}
+			
+			*mem++ = c;
+		}
+	}
+	
+	*--sp = *mem++;
+	return;			
 }
 
 /*
@@ -487,6 +516,10 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.6  2009-06-01 16:54:19  jpd
+ * Installation instructions.
+ * Fix line editing, allow external reset.
+ *
  * Revision 1.5  2009-03-26 01:26:22  jpd
  * Better factoring.
  *

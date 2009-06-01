@@ -41,6 +41,8 @@ extern int flag;   /* the flag register */
 extern cell cptr;		/* compile pointer */
 extern cell cbuf;		/* loc of compile buffer */
 
+extern cell FlowPrompt;		/* line prompt character */
+
 /*
  * Offsets of fields within a dictionary entry.
  */
@@ -112,6 +114,10 @@ void put_c_string( char *s );
 
 /*
  * $Log$
+ * Revision 1.5  2009-06-01 16:54:19  jpd
+ * Installation instructions.
+ * Fix line editing, allow external reset.
+ *
  * Revision 1.4  2009-03-26 01:26:22  jpd
  * Better factoring.
  *
