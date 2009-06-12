@@ -8,11 +8,6 @@ CFLAGS = -g -Wall
 %.o : %.s
 	$(AS) -o $@ $<
 
-# strip // style comments because arm-elf-as different from as
-
-%.s : %.S
-	sed -e 's/\/\/.*$//' <$< >$@
-
 %.o : %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
@@ -31,7 +26,14 @@ init_lse.o : init_lse.txt Makefile
 test : testmain.o liblse-arm.a
 	$(CC)  testmain.o -o test -L. -llse-arm -lm
 
+clean : 
+	rm -f *.a *.o init_lse.txt test
+
 # $Log$
+# Revision 1.5  2009-06-12 21:00:57  jpd
+# Remove %.s : %.S rule.
+# Add clean.
+#
 # Revision 1.4  2009-03-26 01:26:22  jpd
 # Better factoring.
 #
