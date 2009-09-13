@@ -34,14 +34,19 @@ void usart_init( int un ) {
 char usart_getc( int un )
 {
 	struct usart *u = ulist[un];
+	char c;
 
 	while( !(u->csr & RXRDY )) ;		/* Spin */
-	return u->rhr;
+	c = u->rhr;
+	if( c == '\r' ) c = '\n';		/* EDT ends lines with \r, but LSE uses \n */
+	return c;
 }
 
 void usart_putc( int un, char c )
 {
 	struct usart *u = ulist[un];
+	
+	if( c == '\n' ) c = '\r';		/* EDT ends lines with \r, but LSE uses \n */
 
 	while( !(u->csr & TXRDY )) ;		/* Spin */
 	u->thr = c;
@@ -50,6 +55,9 @@ void usart_putc( int un, char c )
 
 /*
  * $Log$
+ * Revision 1.2  2009-09-13 01:09:09  jpd
+ * Exchange \n and \r in serial I/O.
+ *
  * Revision 1.1  2009-03-23 02:42:04  jpd
  * Version for TESS hardware.
  *
