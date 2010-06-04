@@ -44,7 +44,7 @@ void C_startup( void )
 Zero the "BSS" area, which holds uninitialized static variables.
 */
 
-	bzero( bss_start_, bss_end_ - bss_start_ );
+	bzero( bss_start_, (void *) bss_end_ - (void *) bss_start_ );
 	
 /*
 
@@ -54,7 +54,8 @@ used.
 */
 
 #if COPY_STATIC
-	bcopy( data_load_, data_start_, data_end_ - data_start_ );
+	bcopy( data_load_, data_start_, 
+		(void *) data_end_ - (void *) data_start_ );
 #endif
 
 	app_main();
@@ -63,6 +64,9 @@ used.
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-04 18:36:07  jpd
+ * Fix byte count.
+ *
  * Revision 1.1  2009-03-14 22:58:06  jpd
  * Can now run LSE in an ARM SAM7X!
  *
