@@ -73,8 +73,8 @@ extern cell FlowPrompt;		/* line prompt character */
  
 #define	STACK_DIM	64
 #define RSTACK_DIM	64
-#define	DEFMEM_DIM	6000
-#define CONSTMEM_DIM	6000
+#define	DEFMEM_DIM	3000
+#define CONSTMEM_DIM	3000
 #define CBUF_DIM	160
 #define STRINGBUF_DIM	200
 
@@ -114,6 +114,9 @@ void put_c_string( char *s );
 
 /*
  * $Log$
+ * Revision 1.6  2010-06-04 18:13:38  jpd
+ * Update build for multiple targets.
+ *
  * Revision 1.5  2009-06-01 16:54:19  jpd
  * Installation instructions.
  * Fix line editing, allow external reset.

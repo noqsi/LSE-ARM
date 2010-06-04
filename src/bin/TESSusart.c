@@ -5,7 +5,8 @@ Imported from SXI, which used an older device than the SAM7X,
 so it could use some updating.
 */
 
-#include "memory.h"
+// Tess only runs on the 7x256 card... ~Matt
+#include "memory_7x256.h"
 #include "usart.h"
 #include "usart_driver.h"
 
@@ -55,6 +56,9 @@ void usart_putc( int un, char c )
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-04 18:13:17  jpd
+ * Update build for multiple targets.
+ *
  * Revision 1.2  2009-09-13 01:09:09  jpd
  * Exchange \n and \r in serial I/O.
  *

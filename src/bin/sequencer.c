@@ -1,6 +1,11 @@
 /* $Id$ */
 
-#include "memory.h"
+/* sequencer.c is only used by TESS, which uses the SAM7x256 board.
+   So we know which memory file to include? ~Matt */
+#include "memory_7x256.h"
+
+/*************************/
+
 #include "pio.h"
 #include "pmc.h"
 #include "peripheral_id.h"
@@ -99,6 +104,9 @@ void sequencer_go( int start_block, int blocks, int count )
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-04 18:13:17  jpd
+ * Update build for multiple targets.
+ *
  * Revision 1.2  2009-03-26 02:10:13  jpd
  * Can now compile seq stuff.
  *

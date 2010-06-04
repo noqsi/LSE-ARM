@@ -4,7 +4,9 @@
  * Start up LSE on the ARM.
  */
 
-#include "memory.h"
+// Tess only runs on the 7x256 card... ~Matt
+#include "memory_7x256.h"
+
 #include "pio.h"
 #include "wdt.h"
 #include "pmc.h"
@@ -98,6 +100,9 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.4  2010-06-04 18:13:17  jpd
+ * Update build for multiple targets.
+ *
  * Revision 1.3  2009-03-26 02:26:04  jpd
  * Init seq words.
  * Fix ambiguous stack op.
