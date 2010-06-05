@@ -23,8 +23,9 @@ all : lse7A3.elf lse7x256.elf TESScamera.elf
 
 $(LSE): $(HDR) Makefile
 
-lse7x256.elf: $(LSE) $(LD7x256)
-	arm-elf-gcc -T$(LD7x256) -DLD7x256=1 $(LDFLAGS) -o $@ $(LSE) $(LIBS)
+lse7x256.elf:  $(LD7x256) boot.o C_startup.o lse7x256.o usart.o
+	arm-elf-gcc -T$(LD7x256) $(LDFLAGS) -o $@ \
+		boot.o C_startup.o lse7x256.o usart.o $(LIBS)
 
 lse7A3.elf: $(LSE) $(LD7A3)
 	arm-elf-gcc -T$(LD7A3) -DLD7A3=1 $(LDFLAGS) -o $@ $(LSE) $(LIBS)
@@ -41,6 +42,9 @@ clean:
 	rm -f *.o *.elf
 
 # $Log$
+# Revision 1.6  2010-06-05 17:32:44  jpd
+# More reorganization.
+#
 # Revision 1.5  2010-06-04 18:13:17  jpd
 # Update build for multiple targets.
 #
