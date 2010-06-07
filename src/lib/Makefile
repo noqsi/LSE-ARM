@@ -3,7 +3,7 @@
 AS = arm-elf-as
 CC = arm-elf-gcc
 AR = arm-elf-ar
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -I../include
 
 %.o : %.s
 	$(AS) -o $@ $<
@@ -11,12 +11,14 @@ CFLAGS = -g -Wall
 %.o : %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-OBJS =  init_lse.o strings.o lse-arm.o primitives.o
+OBJS =  init_lse.o strings.o lse-arm.o primitives.o usart.o C_startup.o copy_static.o
+
+all : boot.o liblse-arm.a
 
 liblse-arm.a : $(OBJS)
 	$(AR) rcs liblse-arm.a $(OBJS)
 
-strings.o lse-arm.o primitives.o : lse-arm.h Makefile
+$(OBJS) : Makefile
 
 init_lse.txt : init.lse Makefile
 	sed -e '/^#/d' -e '/^$$/d' init.lse >init_lse.txt
@@ -30,6 +32,9 @@ clean :
 	rm -f *.a *.o init_lse.txt test
 
 # $Log$
+# Revision 1.6  2010-06-07 00:39:01  jpd
+# Massive reorganization of source tree.
+#
 # Revision 1.5  2009-06-12 21:00:57  jpd
 # Remove %.s : %.S rule.
 # Add clean.

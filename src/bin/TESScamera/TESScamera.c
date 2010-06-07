@@ -1,0 +1,137 @@
+/* $Id$ */
+
+/*
+ * Start up LSE on the ARM.
+ */
+
+// Tess only runs on the 7x256 card... ~Matt
+#include "memory_7x256.h"
+
+#include "pio.h"
+#include "wdt.h"
+#include "pmc.h"
+#include "peripheral_id_7x256.h"
+#include "usart_driver.h"
+
+void lse_init( void );
+void lse_main( void );
+void copy_static( void );
+void SeqPrimitives( void );
+
+/*
+Provide an "application". Placeholder.
+*/
+
+char app_lse[] = "1 doPrompt !\n";
+
+/*
+Provide I/O primitives.
+*/
+
+char readchar( void ){ return usart_getc( 0 ); }
+
+void writechar( char c ){ usart_putc( 0, c ); }
+
+
+/*
+ * Configure processor to run the application.
+ * Do not use any static variables in this function!
+ */
+ 
+void app_configure( void )
+{
+
+/* 
+
+If you want to actually use the watchdog, you'll have to change this, as you
+get no second chance short of a processor reset! 
+
+*/
+
+	watchdog_disable();
+
+/* 
+
+Suitable oscillator setup for the TESS Interface board. The external oscillator
+is 29.4912 MHz.
+
+*/
+
+	PMC->mor = OSCBYPASS;
+
+/*
+Select the main clock, straight through. If you want something else
+you'll need to fiddle with PRES and/or the PLL.
+*/
+
+	PMC->mckr = CSS_MAIN;
+
+/*
+Turn on peripheral clocks, as needed.
+*/
+
+	PMC->pcer = bit(US0_ID);	/* USART0 */
+
+/*
+Configure IO pins here. Other peripheral configuration can happen in drivers,
+but it's useful to gather the physical pin configuration together in one place,
+for clarity and to avoid conflict.
+*/
+
+	PIOA->asr = 0x3;	/* enable TXD0, RXD0 */
+	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
+	PIOA->oer = 0x2;	/* enable output on TXD0 */
+
+}
+
+/*
+ * List the usarts for the driver
+ */
+
+#define USARTS 1	/* only need one of them */
+
+struct usart_parameters usart_list[USARTS];
+
+
+/*
+Finish I/O initialization and start up LSE.
+Note that usart_init() has to be here, not in app_configure,
+because it uses a static table.
+*/
+
+
+void app_main()
+{
+	copy_static();			/* Need to do this before I/O init */
+	usart_list[0].usart = USART0;
+	usart_list[0].brgr = 192;	/* 9600 baud */
+	usart_list[0].flags = UF_CR;	/* CR is end of line */
+	usart_init( usart_list, USARTS ); 
+	lse_init();
+	SeqPrimitives();	/* setup the seq words */
+	lse_main();
+}
+
+/*
+ * $Log$
+ * Revision 1.1  2010-06-07 00:39:01  jpd
+ * Massive reorganization of source tree.
+ *
+ * Revision 1.4  2010-06-04 18:13:17  jpd
+ * Update build for multiple targets.
+ *
+ * Revision 1.3  2009-03-26 02:26:04  jpd
+ * Init seq words.
+ * Fix ambiguous stack op.
+ *
+ * Revision 1.2  2009-03-26 01:26:22  jpd
+ * Better factoring.
+ *
+ * Revision 1.1  2009-03-23 02:42:04  jpd
+ * Version for TESS hardware.
+ *
+ * Revision 1.1  2009-03-14 22:58:06  jpd
+ * Can now run LSE in an ARM SAM7X!
+ *
+ */
+

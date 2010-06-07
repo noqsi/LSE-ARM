@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
-    Copyright 2004, 2005, 2006, 2009 John P. Doty and Matthew P. Wampler-Doty
+    Copyright 2004, 2005, 2006, 2009, 2010 John P. Doty and Matthew P. Wampler-Doty
 
     This file is part of LSE-ARM.
 
@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
-cell stack[STACK_DIM], rstack[RSTACK_DIM], compile_buf[CBUF_DIM],
-	defmem[DEFMEM_DIM], constmem[CONSTMEM_DIM];
+cell stack[STACK_DIM], rstack[RSTACK_DIM], compile_buf[CBUF_DIM];
+//	defmem[DEFMEM_DIM], constmem[CONSTMEM_DIM];
 
 cell	*sp,		/* top active item */
         *rsp,		/* top active return stack item */
@@ -99,13 +99,25 @@ void xeq( void )
 
 void setup_memory( void )
 {
+	cell free;
+	extern cell end;
+	
     	sp = stack + STACK_DIM;
     	rsp = rstack + RSTACK_DIM;
-	deftop = defmem;
 	deflast = 0;
-	constop = constmem;
 	constlast = 0;
 	cbuf = (cell) compile_buf;
+	
+	free = &free - &end;		/* hack to estimate free mem */
+	free -= RESERVE;		/* calloc gets upset if not enough here */
+	
+	
+	deftop = calloc( free/2, sizeof(cell));		// allocate equal amounts
+	constop= calloc( free/2, sizeof(cell));		// to definitions and constants
+	if( !constop ) {
+		put_c_string( "\nDictionary memory allocation failed!\n" );
+		for(;;);
+	}
 }
 
 
@@ -259,8 +271,8 @@ void build_primitives( void )
 	
     build_named_constant( STACK_DIM, "{STACK}" );
     build_named_constant( RSTACK_DIM, "{RSTACK}" );
-    build_named_constant( DEFMEM_DIM, "{DEFMEM}" );
-    build_named_constant( CONSTMEM_DIM, "{CONSTMEM}" );
+//    build_named_constant( DEFMEM_DIM, "{DEFMEM}" );
+//    build_named_constant( CONSTMEM_DIM, "{CONSTMEM}" );
         
     build_named_constant( D_PREV, "{PREV}" );
     build_named_constant( D_DATA, "{DATA}" );
@@ -353,6 +365,9 @@ void lse_main( void )
 
 /*
  * $Log$
+ * Revision 1.7  2010-06-07 00:39:01  jpd
+ * Massive reorganization of source tree.
+ *
  * Revision 1.6  2009-06-01 16:54:19  jpd
  * Installation instructions.
  * Fix line editing, allow external reset.

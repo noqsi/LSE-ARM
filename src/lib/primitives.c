@@ -449,6 +449,14 @@ void put_c_string( char *s ) {
 	}
 }
 
+/*
+ * Hex ouput for C debugging.
+ */
+
+void put_hex( unsigned x )
+{ char buf[16]; (void) snprintf( buf, 16, "%x", x);  put_c_string( buf );}
+
+
 
 void putd( void ) 
 { char buf[16]; (void) snprintf( buf, 16, "%d", (int)*sp++); put_c_string( buf );}
@@ -516,6 +524,9 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.7  2010-06-07 00:39:01  jpd
+ * Massive reorganization of source tree.
+ *
  * Revision 1.6  2009-06-01 16:54:19  jpd
  * Installation instructions.
  * Fix line editing, allow external reset.
