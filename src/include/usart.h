@@ -28,10 +28,30 @@ struct usart {
 #define RSTTX	bit(3)
 #define RXEN	bit(4)
 #define TXEN	bit(6)
+#define TXDIS	bit(7)
+#define RSTSTA	bit(8)
+
+/*
+ * Status/interrupt bits
+ */
+
+#define	RXRDY	bit(0)
+#define	TXRDY	bit(1)
+#define	ENDRX	bit(3)
+#define ENDTX	bit(4)
+#define OVRE	bit(5)
+#define FRAME	bit(6)
+#define PARE	bit(7)
+#define TXEMPTY	bit(9)
+#define TXBUFE	bit(11)
+#define RXBUFF	bit(12)
 
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

@@ -9,8 +9,10 @@
 #include "wdt.h"
 #include "pmc.h"
 #include "rstc.h"
+#include "aic.h"
 #include "peripheral_id_7a3.h"
 #include "usart_driver.h"
+#include "aic_driver.h"
 
 void lse_init( void );
 void lse_main( void );
@@ -29,6 +31,18 @@ Provide I/O primitives.
 char readchar( void ){ return usart_getc( 0 ); }
 
 void writechar( char c ){ usart_putc( 0, c ); }
+
+/*
+Provide glue for USART ISR
+*/
+
+static void usart0_interrupt( void )
+{
+	usart_interrupt( 0 );
+	AIC->eoicr = 0;		/* acknowledge the interrupt to AIC */
+}
+
+
 
 /*
  * Configure processor to run the application.
@@ -76,7 +90,6 @@ Enable reset via NRST pin.
 Turn on peripheral clocks, as needed.
 */
 
-//	PMC->pcer = bit(US0_ID);	/* USART0 */
 
 /*
 Configure IO pins here. Other peripheral configuration can happen in drivers,
@@ -89,6 +102,19 @@ for clarity and to avoid conflict.
 	PIOA->oer = 0x80000000;	/* enable output on TXD0 */
 	PIOA->oer = 0x03300000;	/* enable LED's */
 
+/*
+Set up to dispatch interrupts to the error handler, so that once we start turning
+on peripherals, any interrupt anomaly will attempt to produce a message.
+*/
+
+	irq_dispatch_init();
+
+/*
+Now set up USART interrupt
+*/
+
+	AIC->svr[ SYSC_ID ] = (uint32_t) usart0_interrupt;
+	AIC->iecr = bit( SYSC_ID );
 }
 
 
@@ -111,6 +137,7 @@ void app_main()
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = DBGU;	/* Use the debug unit for serial IO */
 	usart_list[0].brgr = 10;	/* 115200 baud for 18.432 MHz clock */
+	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
 	lse_init();
 	/* build application primitives here */
@@ -119,6 +146,9 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-08 18:56:55  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

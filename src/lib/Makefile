@@ -11,7 +11,8 @@ CFLAGS = -g -Wall -I../include
 %.o : %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-OBJS =  init_lse.o strings.o lse-arm.o primitives.o usart.o C_startup.o copy_static.o
+OBJS =  init_lse.o strings.o lse-arm.o primitives.o usart.o C_startup.o copy_static.o aic.o \
+	irq_stack.o
 
 all : boot.o liblse-arm.a
 
@@ -32,6 +33,9 @@ clean :
 	rm -f *.a *.o init_lse.txt test
 
 # $Log$
+# Revision 1.7  2010-06-08 18:57:41  jpd
+# Faults and user interrupts now work on SAM7A3
+#
 # Revision 1.6  2010-06-07 00:39:01  jpd
 # Massive reorganization of source tree.
 #

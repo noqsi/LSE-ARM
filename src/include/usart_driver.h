@@ -9,13 +9,18 @@ struct usart_parameters {
 /* Flag definitions */
 
 #define UF_CR	1		/* For serial controllers that end line with CR */
+#define UF_BREAK 2		/* Enable interrupt on break (framing error) */
 	
 extern void usart_init( struct usart_parameters *p, int n );
 extern char usart_getc( int un );
 extern void usart_putc( int un, char c );
+extern void usart_interrupt( int un );
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

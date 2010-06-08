@@ -73,6 +73,11 @@ void interrupt( int sig )
 	longjmp( rexeq, sig );
 }
 
+void abort( void )
+{
+	interrupt( 1 );
+}
+
 /*
  * Special primitive to start LSE once bootstrap has gone far enough.
  */
@@ -80,15 +85,34 @@ void interrupt( int sig )
 void xeq( void )
 {
 	cell * volatile savedlc = ((cell *) (intptr_t) *(lc+1)) + D_BODY - 1;
-
-	switch( setjmp( rexeq )) {
-	/* here's where to have different actions for different aborts */
+	int sig;
 	
-	case 1 : put_c_string( "Aborted!\n" );
+	sig = setjmp( rexeq );
+
+	switch( sig ) {
+	/* here's where to have different actions for different aborts */
+	case 0 : /* first time through */
+		break;
+	case 1 : put_c_string( "\nSoftware abort\n" );
+		break;
+	case 2 : put_c_string( "\nUndefined instruction\n" );
+		break;
+	case 3 : put_c_string( "\nSoftware interrupt\n" );
+		break;
+	case 4 : put_c_string( "\nMemory access error\n" );
+		break;
+	case 6 : put_c_string( "\nUncaught IRQ\n" );
+		break;
+	case 7 : put_c_string( "\nUncaught FIQ\n" );
+		break;
+	case 8 : put_c_string( "\nInterrupted\n" );
 		break;
 	default:
+		put_c_string( "\nUnknown condition\n" );
 		break;
 	}
+	
+	if( sig ) primitive_io_abort();	/* reset input after restart */
 	
 	sp = stack + STACK_DIM;
 	rsp = rstack + RSTACK_DIM;
@@ -365,6 +389,9 @@ void lse_main( void )
 
 /*
  * $Log$
+ * Revision 1.8  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.7  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

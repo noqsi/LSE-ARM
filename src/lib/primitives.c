@@ -188,6 +188,17 @@ void unget( void )
 
 cell FlowPrompt = -1;			/* if >= 0, prompt lines with this */
 
+/*
+Call primitive_io_abort after a fault to clear pending input.
+*/
+
+static int abort_input;
+
+void primitive_io_abort( void )
+{
+	abort_input = 1;
+}
+
 void get( void )
 {
 	static char* mem = init_lse;
@@ -211,10 +222,12 @@ void get( void )
 		inited = 1;
 	}
 		
-	if( !*mem ) {
+	if( abort_input || !*mem ) {
 		
 		/* If we get here, there is no more input in memory,
 		so grab a line from the input stream */
+		
+		abort_input = 0;
 		
 		if( FlowPrompt >= 0 ) writechar( FlowPrompt );
 	
@@ -524,6 +537,9 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.8  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.7  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

@@ -77,7 +77,7 @@ extern cell FlowPrompt;		/* line prompt character */
 // #define CONSTMEM_DIM	3000
 #define CBUF_DIM	160
 #define STRINGBUF_DIM	200
-#define RESERVE		1200	// Cells to reserve for C stack and heap
+#define RESERVE		1300	// Cells to reserve for C stack and heap
 
 /*
  * Primitive functions
@@ -113,9 +113,13 @@ void interrupt( int sig );
 void put_c_string( char *s );
 void copy_static( void );
 void put_hex( unsigned x );
+void primitive_io_abort( void );
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

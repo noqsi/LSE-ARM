@@ -8,6 +8,7 @@ so it could use some updating.
 // #include "memory.h"
 #include "usart.h"
 #include "usart_driver.h"
+#include "aic_driver.h"
 
 /*
  * Init USART using constants cribbed from Angel.
@@ -28,6 +29,7 @@ void usart_init( struct usart_parameters *p, int n ) {
 		u->mr = 0x8c0;	/* 8 bits, no parity */
 		u->brgr = p[i].brgr;	/* set baud */
 		u->cr = RXEN | TXEN;	/* enable RX/TX */
+		if( p[i].flags & UF_BREAK ) u->ier = FRAME;	/* enable user interrupt */
 	}
 }
 
@@ -59,7 +61,28 @@ void usart_putc( int un, char c )
 
 
 /*
+ * Interrupt handler
+ *
+ * The code that sets up the interrupt vectoring should provide
+ * glue that calls this with the correct unit number,
+ * and if AIC is used, does the EOICR thing.
+ */
+
+extern void user_interrupt( void );
+
+void usart_interrupt( int un )
+{
+	struct usart *u = up[un].usart;
+	u->cr = RSTRX | RSTSTA;
+	u->cr = RXEN;
+	user_interrupt();
+}
+
+/*
  * $Log$
+ * Revision 1.2  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

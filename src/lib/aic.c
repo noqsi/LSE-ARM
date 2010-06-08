@@ -26,7 +26,18 @@ void irq_dispatch( void )
  
 void irq_fault( void )
 {
+	AIC->eoicr = 0;		/* acknowledge the interrupt to AIC */
 	superfault( 6 );	/* See boot.s */
+}
+
+/*
+ * Get back to prompt. Does this really belong here?
+ */
+ 
+void user_interrupt( void )
+{	
+	AIC->eoicr = 0;		/* acknowledge the interrupt to AIC */	
+	superfault( 8 );	/* See boot.s */
 }
 
 /*
@@ -42,6 +53,9 @@ void irq_dispatch_init( void )
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-08 18:57:41  jpd
+ * Faults and user interrupts now work on SAM7A3
+ *
  * Revision 1.1  2010-06-07 18:33:44  jpd
  * AIC driver.
  *
