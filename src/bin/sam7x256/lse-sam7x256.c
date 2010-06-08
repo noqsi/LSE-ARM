@@ -9,8 +9,10 @@
 #include "wdt.h"
 #include "pmc.h"
 #include "rstc.h"
+#include "aic.h"
 #include "peripheral_id_7x256.h"
 #include "usart_driver.h"
+#include "aic_driver.h"
 
 void lse_init( void );
 void lse_main( void );
@@ -29,6 +31,18 @@ Provide I/O primitives.
 char readchar( void ){ return usart_getc( 0 ); }
 
 void writechar( char c ){ usart_putc( 0, c ); }
+
+/*
+Provide glue for USART ISR
+*/
+
+static void usart0_interrupt( void )
+{
+	usart_interrupt( 0 );
+	AIC->eoicr = 0;		/* acknowledge the interrupt to AIC */
+}
+
+
 
 /*
  * Configure processor to run the application.
@@ -88,6 +102,20 @@ for clarity and to avoid conflict.
 	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
 	PIOA->oer = 0x2;	/* enable output on TXD0 */
 	PIOB->oer= 0x780000;	/* enable LED's */
+	
+/*
+Set up to dispatch interrupts to the error handler, so that once we start turning
+on peripherals, any interrupt anomaly will attempt to produce a message.
+*/
+
+	irq_dispatch_init();
+
+/*
+Now set up USART interrupt
+*/
+
+	AIC->svr[ US0_ID ] = (uint32_t) usart0_interrupt;
+	AIC->iecr = bit( US0_ID );
 
 }
 
@@ -111,6 +139,7 @@ void app_main()
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = USART0;
 	usart_list[0].brgr = 10;	/* 115200 baud for 18.432 MHz clock */
+	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
 	lse_init();
 	/* build application primitives here */
@@ -119,6 +148,9 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.2  2010-06-08 20:25:38  jpd
+ * Interrupts working with SAM7X256 board, too.
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

@@ -29,9 +29,14 @@ void usart_init( struct usart_parameters *p, int n ) {
 		u->mr = 0x8c0;	/* 8 bits, no parity */
 		u->brgr = p[i].brgr;	/* set baud */
 		u->cr = RXEN | TXEN;	/* enable RX/TX */
-		if( p[i].flags & UF_BREAK ) u->ier = FRAME;	/* enable user interrupt */
+		if( p[i].flags & UF_BREAK ) u->ier = FRAME | RXBRK;	/* enable user interrupt */
 	}
 }
+
+/*
+Note: different variants show different behavior. The SAM7A3 DBGU lacks the RXBRK feature:
+instead, a break causes a FRAME error. So, in the above we consider either as a break.
+*/
 
 /*
  * Synchronous read and write.
@@ -80,6 +85,9 @@ void usart_interrupt( int un )
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-08 20:25:38  jpd
+ * Interrupts working with SAM7X256 board, too.
+ *
  * Revision 1.2  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *

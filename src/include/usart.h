@@ -37,6 +37,7 @@ struct usart {
 
 #define	RXRDY	bit(0)
 #define	TXRDY	bit(1)
+#define RXBRK	bit(2)		/* DBGU lacks this */
 #define	ENDRX	bit(3)
 #define ENDTX	bit(4)
 #define OVRE	bit(5)
@@ -49,6 +50,9 @@ struct usart {
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-08 20:25:38  jpd
+ * Interrupts working with SAM7X256 board, too.
+ *
  * Revision 1.2  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *
