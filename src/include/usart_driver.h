@@ -2,7 +2,7 @@
 
 struct usart_parameters {
 	struct usart *usart;	/* pointer to the hardware device */
-	unsigned brgr;		/* Baud rate generator register */
+	unsigned baud;		/* Baud rate */
 	unsigned flags;		/* flags to driver */
 };
 
@@ -18,6 +18,12 @@ extern void usart_interrupt( int un );
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-10 17:53:07  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.2  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *

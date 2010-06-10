@@ -13,16 +13,42 @@
 #include "peripheral_id_7a3.h"
 #include "usart_driver.h"
 #include "aic_driver.h"
+#include "pit_driver.h"
 
 void lse_init( void );
 void lse_main( void );
 void copy_static( void );
 
 /*
+Let everyone know what the master clock frequency is.
+*/
+
+const unsigned mck_hz = 18432000;
+
+/*
 Provide an "application". Placeholder.
 */
 
 char app_lse[] = "1 doPrompt !\n";
+
+/*
+A little custom feature is to blink a light at 1 hz.
+Do this on the system tick.
+*/
+
+#define TICK_HZ 4000
+
+static void blink( void )
+{
+	static unsigned count;
+	if( count < TICK_HZ/2 )
+		PIOA->sodr = 0x00100000;
+	else
+		PIOA->codr = 0x00100000;
+	count += 1;
+	if( count >= TICK_HZ ) count = 0;
+
+} 
 
 /*
 Provide I/O primitives.
@@ -33,12 +59,14 @@ char readchar( void ){ return usart_getc( 0 ); }
 void writechar( char c ){ usart_putc( 0, c ); }
 
 /*
-Provide glue for USART ISR
+We're using interrupts from two devices on the system controller, so we need
+a dispatcher to figure out which ISR to invoke.
 */
 
-static void usart0_interrupt( void )
+static void sysc_isr( void )
 {
-	usart_interrupt( 0 );
+	if( PIT->sr & PITS ) pit_isr();
+	else usart_interrupt( 0 );	/* by elimination */
 	AIC->eoicr = 0;		/* acknowledge the interrupt to AIC */
 }
 
@@ -101,6 +129,7 @@ for clarity and to avoid conflict.
 	PIOA->pdr = 0xc0000000;	/* relinquish pins to USART0 */
 	PIOA->oer = 0x80000000;	/* enable output on TXD0 */
 	PIOA->oer = 0x03300000;	/* enable LED's */
+	PIOA->sodr = 0x03300000;	/* turn off LED's */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
@@ -110,10 +139,10 @@ on peripherals, any interrupt anomaly will attempt to produce a message.
 	irq_dispatch_init();
 
 /*
-Now set up USART interrupt
+Now set up interrupts
 */
 
-	AIC->svr[ SYSC_ID ] = (uint32_t) usart0_interrupt;
+	AIC->svr[ SYSC_ID ] = (uint32_t) sysc_isr;
 	AIC->iecr = bit( SYSC_ID );
 }
 
@@ -128,17 +157,19 @@ struct usart_parameters usart_list[USARTS];
 
 /*
 Finish I/O initialization and start up LSE.
-Note that usart_init() has to be here, not in app_configure,
-because it uses a static table, and a static variable in the driver.
+Note that device driver initializations generally have to be here, not in app_configure,
+because static variables are generally involved.
 */
 
 void app_main()
 {
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = DBGU;	/* Use the debug unit for serial IO */
-	usart_list[0].brgr = 10;	/* 115200 baud for 18.432 MHz clock */
+	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
-	usart_init( usart_list, USARTS ); 
+	usart_init( usart_list, USARTS );
+	init_pit( PIT, TICK_HZ );
+	on_tick = blink; 
 	lse_init();
 	/* build application primitives here */
 	lse_main();
@@ -146,6 +177,12 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-10 17:53:06  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.2  2010-06-08 18:56:55  jpd
  * Faults and user interrupts now work on SAM7A3
  *

@@ -5,20 +5,21 @@ Imported from SXI, which used an older device than the SAM7X,
 so it could use some updating.
 */
 
-// #include "memory.h"
 #include "usart.h"
 #include "usart_driver.h"
 #include "aic_driver.h"
 
+extern const unsigned mck_hz;	/* Master clock */
+
 /*
- * Init USART using constants cribbed from Angel.
- * Should make this more flexible sometime.
+ * Init USART.
  */
 
 static struct usart_parameters *up;
 
 void usart_init( struct usart_parameters *p, int n ) {
 	int i;
+	unsigned bck = mck_hz/16;	/* Baud rate generator clock */
 	
 	up = p;
 	
@@ -27,7 +28,8 @@ void usart_init( struct usart_parameters *p, int n ) {
 	
 		u->cr = RSTRX | RSTTX;	/* reset RX/TX */
 		u->mr = 0x8c0;	/* 8 bits, no parity */
-		u->brgr = p[i].brgr;	/* set baud */
+		/* assume simplest (DBGU) brgr variant. */
+		u->brgr = (bck + p[i].baud/2)/p[i].baud;	/* set baud, round to nearest */
 		u->cr = RXEN | TXEN;	/* enable RX/TX */
 		if( p[i].flags & UF_BREAK ) u->ier = FRAME | RXBRK;	/* enable user interrupt */
 	}
@@ -85,6 +87,12 @@ void usart_interrupt( int un )
 
 /*
  * $Log$
+ * Revision 1.4  2010-06-10 17:53:07  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.3  2010-06-08 20:25:38  jpd
  * Interrupts working with SAM7X256 board, too.
  *

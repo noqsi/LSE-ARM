@@ -34,7 +34,9 @@ cell	*sp,		/* top active item */
 	*deftop,	/* top of definition dictionary */
 	*deflast,	/* last entry in definition dictionary */
 	*constop,	/* top of constant dictionary */
-	*constlast;	/* last entry of constant dictionary */
+	*constlast,	/* last entry of constant dictionary */
+	*defend,	/* end of definition area */
+	*constend;	/* end of constant area */
 		
 int flag;		/* the flag register */
 
@@ -142,6 +144,8 @@ void setup_memory( void )
 		put_c_string( "\nDictionary memory allocation failed!\n" );
 		for(;;);
 	}
+	defend = deftop + free/2;
+	constend = constop + free/2;
 }
 
 
@@ -277,9 +281,9 @@ void build_primitives( void )
  * not necessarily cells, so you must use {@} and {!} to load and store them.
  */
  
-    build_named_constant( (cell) &stack, "{stack}" );
-    build_named_constant( (cell) &sp, "{sp}" );
-    build_named_constant( (cell) &rstack, "{rstack}" );
+//    build_named_constant( (cell) &stack, "{stack}" );
+//    build_named_constant( (cell) &sp, "{sp}" );
+//    build_named_constant( (cell) &rstack, "{rstack}" );
     build_named_constant( (cell) &rsp, "{rsp}" );
     build_named_constant( (cell) &lc, "{lc}" );
     build_named_constant( (cell) &flag, "{flag}" );
@@ -293,10 +297,10 @@ void build_primitives( void )
  * VM/dictionary constants:
  */
 	
-    build_named_constant( STACK_DIM, "{STACK}" );
-    build_named_constant( RSTACK_DIM, "{RSTACK}" );
-//    build_named_constant( DEFMEM_DIM, "{DEFMEM}" );
-//    build_named_constant( CONSTMEM_DIM, "{CONSTMEM}" );
+//    build_named_constant( STACK_DIM, "{STACK}" );
+//    build_named_constant( RSTACK_DIM, "{RSTACK}" );
+    build_named_constant( defend, "{DEFEND}" );
+    build_named_constant( constend, "{CONSTEND}" );
         
     build_named_constant( D_PREV, "{PREV}" );
     build_named_constant( D_DATA, "{DATA}" );
@@ -389,6 +393,12 @@ void lse_main( void )
 
 /*
  * $Log$
+ * Revision 1.9  2010-06-10 17:53:07  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.8  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *

@@ -18,6 +18,7 @@ extern void superfault( int n );	/* See boot.s */
 void irq_dispatch( void )
 {
 	(* (void (*)(void)) AIC->ivr)();
+	AIC->eoicr = 0;
 }
 
 /*
@@ -53,6 +54,12 @@ void irq_dispatch_init( void )
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-10 17:53:07  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.2  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *

@@ -19,6 +19,13 @@ void lse_main( void );
 void copy_static( void );
 
 /*
+Let everyone know what the master clock frequency is.
+*/
+
+const unsigned mck_hz = 18432000;
+
+
+/*
 Provide an "application". Placeholder.
 */
 
@@ -138,7 +145,7 @@ void app_main()
 {
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = USART0;
-	usart_list[0].brgr = 10;	/* 115200 baud for 18.432 MHz clock */
+	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
 	lse_init();
@@ -148,6 +155,12 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-10 17:53:07  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.2  2010-06-08 20:25:38  jpd
  * Interrupts working with SAM7X256 board, too.
  *

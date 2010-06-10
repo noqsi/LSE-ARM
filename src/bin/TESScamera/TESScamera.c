@@ -20,6 +20,12 @@ void copy_static( void );
 void SeqPrimitives( void );
 
 /*
+Let everyone know what the master clock frequency is.
+*/
+
+const unsigned mck_hz = 29491200;
+
+/*
 Provide an "application". Placeholder.
 */
 
@@ -130,7 +136,7 @@ void app_main()
 {
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = USART0;
-	usart_list[0].brgr = 192;	/* 9600 baud */
+	usart_list[0].baud = 9600;
 	usart_list[0].flags = UF_CR;	/* CR is end of line */
 	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
@@ -141,6 +147,12 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.3  2010-06-10 17:53:06  jpd
+ * Completed interrupt infrastructure.
+ * Periodic timer interrupt working on SAM7A3.
+ * Commented out some unnecessary definitions.
+ * Added ability to display free memory.
+ *
  * Revision 1.2  2010-06-08 20:59:57  jpd
  * Update for interrupts.
  *

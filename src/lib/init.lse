@@ -307,9 +307,24 @@ to" : dup 1 [] 0 swap [to"] drop drop drop swap !
 " : get drop {constop} {@} {DATA} [] to" >string< {DATA} neg [] >code
 ' " immediate
 
+# Comment and line continuation combined to allow
+# comments within multiline definitions
+
+\# : skip>nl
+' \# immediate
+
+
+# dictionary lists all definitions
+
 # ca [def,] yields 0
 [def,] : dup ,h sp dup {NAME} [] @ ,t nl {PREV} [] @ dup 0= no? &repeat
 dictionary : {deflast} {@} [def,] drop
+
+# memory displays free memory
+
+memout : @ - , "  bytes" ,t nl
+memory : " definitions: " ,t {DEFEND} {deftop} memout \
+		" constants " ,t {CONSTEND} {constop} memout 
 
 # can'tLoad : drop " Load: " ,t ,t sp qm nl false
 
@@ -361,7 +376,7 @@ File{ : 0 doPrompt ! 18 FlowPrompt !
 # c is a file pointer
 # saves current output on number stack
 # has to tuck it under so it can return
-# out( : flush r> out@ >r >r >out
+# out( : flush r> out@ >r >out
 
 # restore
 # )out : flush r> r> >out >r
@@ -418,16 +433,16 @@ char : <token? ifnot charror text 1 [] @ >constant< >code
 # c c1+ yields c
 # "increments" a character
 # yields true for carry, false otherwise
-c1+ : 1 +				# next char, no carry
-c1+ : dup char / = then false		# leave / alone, no carry
-c1+ : dup char z = then drop char a	# z -> a, carry
-c1+ : dup char Z = then drop char A	# Z -> A, carry
-c1+ : dup char 9 = then drop char 0	# 9 -> 0, carry
+# c1+ : 1 +				# next char, no carry
+# c1+ : dup char / = then false		# leave / alone, no carry
+# c1+ : dup char z = then drop char a	# z -> a, carry
+# c1+ : dup char Z = then drop char A	# Z -> A, carry
+# c1+ : dup char 9 = then drop char 0	# 9 -> 0, carry
 
 # s name+ yields s
 # "increments" a string, with carry
-[name+] : dup count [] dup @ c1+ swap !
-name+ : dup @ [name+] &iterate
+# [name+] : dup count [] dup @ c1+ swap !
+# name+ : dup @ [name+] &iterate
 
 # in out scopy yields nothing
 # copy a string
@@ -445,6 +460,12 @@ scopy : swap dup @ 1 + swap rot move
 
 
 # $Log$
+# Revision 1.5  2010-06-10 17:53:07  jpd
+# Completed interrupt infrastructure.
+# Periodic timer interrupt working on SAM7A3.
+# Commented out some unnecessary definitions.
+# Added ability to display free memory.
+#
 # Revision 1.4  2009-06-01 16:54:19  jpd
 # Installation instructions.
 # Fix line editing, allow external reset.
