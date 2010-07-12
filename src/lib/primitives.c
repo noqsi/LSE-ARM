@@ -74,8 +74,8 @@ void or( void ) { cell w = *sp++; *sp |= w; }
 void xor( void ) { cell w = *sp++; *sp ^= w; }
 void not( void ) { *sp = ~*sp; }
 
-void ffloat( void ) { *(double *)sp = (double) *sp; }
-void fix( void ) { *sp = (cell) *(double *)sp; }
+void ffloat( void ) { * (fcell *)sp = (fcell) *sp; }
+void fix( void ) { *sp = (cell) *(fcell *)sp; }
 
 /*
  * Stack Gymnastics
@@ -537,6 +537,10 @@ void ifelse( void )
 
 /*
  * $Log$
+ * Revision 1.9  2010-07-12 16:45:39  jpd
+ * Improve array construction tools.
+ * Fix casts in "float" and "fix".
+ *
  * Revision 1.8  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *

@@ -294,6 +294,17 @@ variables: : variables forceEOL
 :constant : :def >named_constant< cinit
 ' :constant sooner
 
+# n ; yields nothing
+# append n to the most recent definition
+# useful for filling an array with initial values
+
+; : {deftop} @!+
+
+# 0; yields nothing
+# shorthand, mainly useful in a iterate loop
+
+0; : 0 ;
+
 # Parse a hex constant.
 # Needs work: this version silently gives 0 on error.
 # If it precedes a newline, silently swallows it (a useful trick)
@@ -324,7 +335,7 @@ dictionary : {deflast} {@} [def,] drop
 
 memout : @ - , "  bytes" ,t nl
 memory : " definitions: " ,t {DEFEND} {deftop} memout \
-		" constants " ,t {CONSTEND} {constop} memout 
+		" constants: " ,t {CONSTEND} {constop} memout 
 
 # can'tLoad : drop " Load: " ,t ,t sp qm nl false
 
@@ -354,6 +365,13 @@ heritage? : DefName @ dup 0= no? && find && dup compiled?
 {nothing} : # empty jump target
 then : ' |jmp >code heritage? if >code || drop ' {nothing} >code  
 ' then immediate
+
+# n name :buffer yields nothing
+# define a "counted" buffer, where the first cell is the count
+# of cells remaining.
+
+:buffer : :def >variable< dup {deftop} @ -1 [] ! 0; iterate cinit
+' :buffer sooner
 
 # nondestructive stack dump
 [stack] : count pick , sp
@@ -460,6 +478,10 @@ scopy : swap dup @ 1 + swap rot move
 
 
 # $Log$
+# Revision 1.6  2010-07-12 16:45:39  jpd
+# Improve array construction tools.
+# Fix casts in "float" and "fix".
+#
 # Revision 1.5  2010-06-10 17:53:07  jpd
 # Completed interrupt infrastructure.
 # Periodic timer interrupt working on SAM7A3.
