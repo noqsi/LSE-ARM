@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
-cell stack[STACK_DIM], rstack[RSTACK_DIM], compile_buf[CBUF_DIM];
+cell stack[STACK_DIM+STACK_PAD], rstack[RSTACK_DIM], compile_buf[CBUF_DIM];
 //	defmem[DEFMEM_DIM], constmem[CONSTMEM_DIM];
 
 cell	*sp,		/* top active item */
@@ -393,6 +393,9 @@ void lse_main( void )
 
 /*
  * $Log$
+ * Revision 1.10  2010-07-13 18:38:07  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.9  2010-06-10 17:53:07  jpd
  * Completed interrupt infrastructure.
  * Periodic timer interrupt working on SAM7A3.

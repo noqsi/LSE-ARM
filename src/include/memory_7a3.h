@@ -6,7 +6,7 @@
 #define MEMORY_H 1
 
 #ifndef bit
-#define bit(n) (1<<n)
+#define bit(n) (1<<(n))
 #endif
 
 /* ARM SAM7X memory layout */
@@ -104,6 +104,9 @@
 
 /*
  * $Log$
+ * Revision 1.2  2010-07-13 18:38:06  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.1  2010-06-07 00:39:01  jpd
  * Massive reorganization of source tree.
  *

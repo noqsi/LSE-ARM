@@ -1,4 +1,4 @@
-/* Id */
+/* $Id$ */
 
 #ifndef PIT_H
 #define PIT_H 1
@@ -34,6 +34,9 @@ struct pit {
 
 /*
  * $Log$
+ * Revision 1.2  2010-07-13 18:38:06  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.1  2010-06-10 17:53:07  jpd
  * Completed interrupt infrastructure.
  * Periodic timer interrupt working on SAM7A3.

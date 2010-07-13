@@ -13,6 +13,8 @@
 #include "peripheral_id_7x256.h"
 #include "usart_driver.h"
 #include "aic_driver.h"
+#include "pit_driver.h"
+#include "lse-arm.h"
 
 void lse_init( void );
 void lse_main( void );
@@ -32,12 +34,50 @@ Provide an "application". Placeholder.
 char app_lse[] = "1 doPrompt !\n";
 
 /*
+A little custom feature is to blink a light at 1 hz.
+Do this on the system tick.
+*/
+
+#define TICK_HZ 1000
+
+static void blink( void )
+{
+	static unsigned count;
+	if( count < TICK_HZ/2 )
+		PIOB->sodr = 0x400000;
+	else
+		PIOB->codr = 0x400000;
+	count += 1;
+	if( count >= TICK_HZ ) count = 0;
+
+}
+
+/*
+LSE primitive to get milliseconds since boot.
+*/
+
+#define MSEC_TICKS (TICK_HZ/1000)
+
+void msec ( void ) {*--sp = ticks/MSEC_TICKS;}
+
+/*
 Provide I/O primitives.
 */
 
 char readchar( void ){ return usart_getc( 0 ); }
 
 void writechar( char c ){ usart_putc( 0, c ); }
+
+/*
+The interval timer is part of the system controller, so that's the interrupt
+it needs to service. Turn this into a dispatcher if you need more SYSC interrupts.
+*/
+
+static void sysc_isr( void )
+{
+	pit_isr();
+	AIC->eoicr = 0;		/* acknowledge the interrupt to AIC */
+}
 
 /*
 Provide glue for USART ISR
@@ -107,8 +147,8 @@ for clarity and to avoid conflict.
 
 	PIOA->asr = 0x3;	/* enable TXD0, RXD0 */
 	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
-	PIOA->oer = 0x2;	/* enable output on TXD0 */
 	PIOB->oer= 0x780000;	/* enable LED's */
+	PIOB->sodr= 0x780000;	/* turn them off */
 	
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
@@ -118,8 +158,11 @@ on peripherals, any interrupt anomaly will attempt to produce a message.
 	irq_dispatch_init();
 
 /*
-Now set up USART interrupt
+Now set up interrupts
 */
+
+	AIC->svr[ SYSC_ID ] = (uint32_t) sysc_isr;
+	AIC->iecr = bit( SYSC_ID );
 
 	AIC->svr[ US0_ID ] = (uint32_t) usart0_interrupt;
 	AIC->iecr = bit( US0_ID );
@@ -148,13 +191,19 @@ void app_main()
 	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
+	init_pit( PIT, TICK_HZ );
+	on_tick = blink; 
 	lse_init();
 	/* build application primitives here */
+	build_primitive( msec, "msec" );
 	lse_main();
 }
 
 /*
  * $Log$
+ * Revision 1.4  2010-07-13 18:38:05  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.3  2010-06-10 17:53:07  jpd
  * Completed interrupt infrastructure.
  * Periodic timer interrupt working on SAM7A3.

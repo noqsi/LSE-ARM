@@ -72,6 +72,7 @@ extern cell FlowPrompt;		/* line prompt character */
  */
  
 #define	STACK_DIM	64
+#define STACK_PAD	4	/* To accomodate some underflow */
 #define RSTACK_DIM	64
 // #define	DEFMEM_DIM	3000
 // #define CONSTMEM_DIM	3000
@@ -117,6 +118,9 @@ void primitive_io_abort( void );
 
 /*
  * $Log$
+ * Revision 1.3  2010-07-13 18:38:05  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.2  2010-06-08 18:57:41  jpd
  * Faults and user interrupts now work on SAM7A3
  *

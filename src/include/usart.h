@@ -5,7 +5,7 @@ so it could use some updating.
 */
 
 #ifndef bit
-#define bit(n) (1<<n)
+#define bit(n) (1<<(n))
 #endif
 
 struct usart {
@@ -50,6 +50,9 @@ struct usart {
 
 /*
  * $Log$
+ * Revision 1.4  2010-07-13 18:38:07  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.3  2010-06-08 20:25:38  jpd
  * Interrupts working with SAM7X256 board, too.
  *

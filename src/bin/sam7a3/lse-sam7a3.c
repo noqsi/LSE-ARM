@@ -14,6 +14,7 @@
 #include "usart_driver.h"
 #include "aic_driver.h"
 #include "pit_driver.h"
+#include "lse-arm.h"
 
 void lse_init( void );
 void lse_main( void );
@@ -48,7 +49,15 @@ static void blink( void )
 	count += 1;
 	if( count >= TICK_HZ ) count = 0;
 
-} 
+}
+
+/*
+LSE primitive to get milliseconds since boot.
+*/
+
+#define MSEC_TICKS (TICK_HZ/1000)
+
+void msec ( void ) {*--sp = ticks/MSEC_TICKS;}
 
 /*
 Provide I/O primitives.
@@ -172,11 +181,15 @@ void app_main()
 	on_tick = blink; 
 	lse_init();
 	/* build application primitives here */
+	build_primitive( msec, "msec" );
 	lse_main();
 }
 
 /*
  * $Log$
+ * Revision 1.4  2010-07-13 18:38:05  jpd
+ * First draft of low level SPI driver.
+ *
  * Revision 1.3  2010-06-10 17:53:06  jpd
  * Completed interrupt infrastructure.
  * Periodic timer interrupt working on SAM7A3.
