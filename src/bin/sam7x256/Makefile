@@ -1,27 +1,41 @@
 # $Id$
 
-CFLAGS  = -g -O -I../../include -mcpu=arm7tdmi -Wall
+AS = arm-elf-as
+CC = arm-elf-gcc
+
+CFLAGS  = -O -I../../include -Wall
 
 LIBDIR = ../../lib
 BOOT= $(LIBDIR)/boot.o
 LDFILE = sam7x256-exec-flash.ld
-ASFLAGS = -mcpu=arm7tdmi -gstabs
 LDFLAGS = -nostartfiles -Lgcc -L$(LIBDIR) 
 LIBS = -llse-arm -lm
 
-%.o:%.c
-	arm-elf-gcc -c $(CFLAGS) $< -o $@
+# %.o:%.c
+#	arm-elf-gcc -c $(CFLAGS) $< -o $@
 
-%.o:%.s
-	arm-elf-as $(ASFLAGS) $< -o $@
+# %.o:%.s
+#	arm-elf-as $(ASFLAGS) $< -o $@
 
-lse-sam7x256.elf:  $(LDFILE) lse-sam7x256.o
-	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-sam7x256.o $(LIBS)
+all : readout.elf
+
+readout.o : readout.c Makefile
+
+app_lse.o : readout_lse.txt
+
+readout_lse.txt : readout.lse Makefile
+	sed -e '/^#/d' -e '/^$$/d' readout.lse >readout_lse.txt
+
+readout.elf:  $(LDFILE) readout.o app_lse.o
+	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) readout.o app_lse.o $(LIBS)
 
 clean:
 	rm -f *.o *.elf
 
 # $Log$
+# Revision 1.2  2010-07-15 17:52:21  jpd
+# *** empty log message ***
+#
 # Revision 1.1  2010-06-07 00:39:01  jpd
 # Massive reorganization of source tree.
 #
