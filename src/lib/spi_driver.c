@@ -4,7 +4,7 @@
 
 /* Keep track of the devices */
 
-static struct spi_parameters *s;
+struct spi_parameters *spi_devices;
 
 /*
 Initialize the devices specified by the array p.
@@ -31,7 +31,7 @@ is the count of elements in the remainder.
 
 void spi_initq( int un, uint32_t *inbuf, uint32_t *outbuf )
 {
-	struct spi_parameters *p = s + un;
+	struct spi_parameters *p = spi_devices + un;
 	
 	p->inq.len = *inbuf;
 	p->inq.ip = p->inq.op = p->inq.q = inbuf + 1;
@@ -67,11 +67,12 @@ static uint32_t getq( struct spi_q *qp )
 
 int spi_read( int un, uint32_t *buf, int n )
 {
+	struct spi_parameters *p = spi_devices + un;
 	int r;			/* number read */
 	uint32_t w;		/* word from q */
-	struct spi_q *q = &(s[un].inq);
+	struct spi_q *q = &(p->inq);
 	
-	s[un].spi->ier = RDRF;	/* turn on the intr */
+	p->spi->ier = RDRF;	/* turn on the intr */
 	
 	for( r = 0; r < n; r += 1 ) {
 		w = getq( q );
@@ -84,7 +85,8 @@ int spi_read( int un, uint32_t *buf, int n )
 		
 int spi_write( int un, uint32_t *buf, int n )
 {
-	struct spi_q *q = &(s[un].inq);
+	struct spi_parameters *p = spi_devices + un;
+	struct spi_q *q = &(p->inq);
 	int r;			/* number written */
 
 	for( r = 0; r < n; r += 1 ) {
@@ -92,7 +94,7 @@ int spi_write( int un, uint32_t *buf, int n )
 		if( c == 0 ) break;		/* q is full */
 	}
 	
-	s[un].spi->ier = TDRE;	/* turn on the intr */
+	p->spi->ier = TDRE;	/* turn on the intr */
 	
 	return r;	/* actual number written */
 }
@@ -100,7 +102,7 @@ int spi_write( int un, uint32_t *buf, int n )
 	
 void spi_isr( int un )
 {
-	struct spi_parameters *p = s + un;
+	struct spi_parameters *p = spi_devices + un;
 	unsigned sr = p->spi->sr;
 
 	
@@ -116,6 +118,10 @@ void spi_isr( int un )
 
 /*
  * $Log$
+ * Revision 1.2  2010-07-16 20:10:40  jpd
+ * More additions to SPI driver.
+ * Cleanup from CVS screwup.
+ *
  * Revision 1.1  2010-07-13 18:38:07  jpd
  * First draft of low level SPI driver.
  *
