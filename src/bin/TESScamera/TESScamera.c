@@ -136,7 +136,7 @@ void app_main()
 {
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = USART0;
-	usart_list[0].baud = 9600;
+	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_CR;	/* CR is end of line */
 	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
@@ -147,6 +147,9 @@ void app_main()
 
 /*
  * $Log$
+ * Revision 1.4  2010-09-06 20:33:57  jpd
+ * Raise baud to 115200
+ *
  * Revision 1.3  2010-06-10 17:53:06  jpd
  * Completed interrupt infrastructure.
  * Periodic timer interrupt working on SAM7A3.
