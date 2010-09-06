@@ -12,7 +12,7 @@ CFLAGS = -g -Wall -I../include
 	$(CC) -c $(CFLAGS) $< -o $@
 
 OBJS =  init_lse.o strings.o lse-arm.o primitives.o usart.o C_startup.o copy_static.o aic.o \
-	irq_stack.o pit.o spi_driver.o
+	irq_stack.o pit.o spi_driver.o spi_primitives.o math.o
 
 all : boot.o liblse-arm.a
 
@@ -33,6 +33,9 @@ clean :
 	rm -f *.a *.o init_lse.txt test
 
 # $Log$
+# Revision 1.10  2010-09-06 20:28:20  jpd
+# *** empty log message ***
+#
 # Revision 1.9  2010-07-13 18:38:07  jpd
 # First draft of low level SPI driver.
 #

@@ -17,7 +17,7 @@ void spi_init( struct spi_parameters *p, int n )
 {
 	int i;
 	
-	s = p;
+	spi_devices = p;
 	
 	for( i = 0; i < n ; i += 1 )
 		p[i].spi->cr = SWRST;
@@ -118,6 +118,9 @@ void spi_isr( int un )
 
 /*
  * $Log$
+ * Revision 1.3  2010-09-06 20:28:20  jpd
+ * *** empty log message ***
+ *
  * Revision 1.2  2010-07-16 20:10:40  jpd
  * More additions to SPI driver.
  * Cleanup from CVS screwup.
