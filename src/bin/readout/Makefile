@@ -21,10 +21,13 @@ all : readout.elf
 
 readout.o : readout.c Makefile
 
-app_lse.o : readout_lse.txt
+app_lse.o : readout_lse.txt spi.txt
 
 readout_lse.txt : readout.lse Makefile
 	sed -e '/^#/d' -e '/^$$/d' readout.lse >readout_lse.txt
+
+spi.txt : spi.lse Makefile
+	sed -e '/^#/d' -e '/^$$/d' spi.lse >spi.txt
 
 readout.elf:  $(LDFILE) readout.o app_lse.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) readout.o app_lse.o $(LIBS)
@@ -33,6 +36,9 @@ clean:
 	rm -f *.o *.elf readout_lse.txt
 
 # $Log$
+# Revision 1.2  2010-09-14 00:01:36  jpd
+# SPI working in local loopback mode.
+#
 # Revision 1.1  2010-07-16 20:10:39  jpd
 # More additions to SPI driver.
 # Cleanup from CVS screwup.

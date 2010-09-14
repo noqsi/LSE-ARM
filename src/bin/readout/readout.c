@@ -20,6 +20,7 @@
 void lse_init( void );
 void lse_main( void );
 void copy_static( void );
+void spi_primitives( void );
 
 /*
 Let everyone know what the master clock frequency is.
@@ -161,6 +162,10 @@ for clarity and to avoid conflict.
 
 	PIOA->asr = 0x3;	/* enable TXD0, RXD0 */
 	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
+	PIOA->asr = 0x70000;	/* enable SPI0 data, clock */
+	PIOA->pdr = 0x70000;
+	PIOA->bsr = 0x27e00380;	/* enable SPIO CS, SPI1 */
+	PIOA->pdr = 0x27e00380;
 	PIOB->oer= 0x780000;	/* enable LED's */
 	PIOB->sodr= 0x780000;	/* turn them off */
 	
@@ -198,6 +203,11 @@ Now set up interrupts
 
 struct usart_parameters usart_list[USARTS];
 
+/* SPI */
+
+#define SPIS 2
+struct spi_parameters spi_list[SPIS];
+
 /*
 Finish I/O initialization and start up LSE.
 Note that usart_init() has to be here, not in app_configure,
@@ -210,17 +220,24 @@ void app_main()
 	usart_list[0].usart = USART0;
 	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
-	usart_init( usart_list, USARTS ); 
+	usart_init( usart_list, USARTS );
+	spi_list[0].spi = SPI0;
+	spi_list[1].spi = SPI1;
+	spi_init( spi_list, SPIS ); 
 	init_pit( PIT, TICK_HZ );
 	on_tick = blink; 
 	lse_init();
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
+	spi_primitives();
 	lse_main();
 }
 
 /*
  * $Log$
+ * Revision 1.2  2010-09-14 00:01:36  jpd
+ * SPI working in local loopback mode.
+ *
  * Revision 1.1  2010-07-16 17:28:10  jpd
  * Re-commit after CVS confusion.
  *

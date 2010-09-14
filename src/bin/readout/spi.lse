@@ -1,19 +1,70 @@
+# $Id$
+
+# LSE driver for SPI
+
+# inq outq unit spi-initq yields nothing
+# n &spi yields sp
+# buf unit spi-write yields nothing
+# buf unit spi-read yields nothing
+# (defined in spi_primitives.c)
+
+# Make queues
+
 20 iq0 :buffer
 20 oq0 :buffer
 20 iq1 :buffer
 20 oq1 :buffer
+iq0 oq0 0 spi-initq
+iq1 oq1 1 spi-initq
 
-# n &spi yields sp
+# unit &spi-cr yields addr
+# get address of the control register
 
-# inq outq unit spi-initq yields nothing
+&spi-cr : &spi 		# offset of zero
+
+# unit &spi-mr yields addr
+# get address of the mode register
+
+&spi-mr : &spi 4 +
+
+# unit &spi-csr yields addr
+# get base address of the chip select register array
+
+&spi-csr : &spi \ 30 +
+
 # unit spi-enable yields nothing
+
+spi-enable : &spi-cr 1 swap !
+
 # unit spi-disable yields nothing
+
+spi-disable : &spi-cr 2 swap !
+
 # unit spi-reset yields nothing
 
+spi-reset : &spi-cr \ 80 swap !
+
+# n addr @|! yields nothing
+# "OR" n with the data at addr
+
+@|! : dup rot swap @ | swap !
+
 # unit spi-master yields nothing
+# Master mode
 
-# conf chan unit spi-configure yields nothing
+spi-master : &spi-mr 1 swap @|!
 
-# buf unit spi-write yields nothing
+# unit spi-variable yields nothing
+# Variable peripheral select mode
 
-# buf unit spi-read yields nothing
+spi-variable : &spi-mr 2 swap @|!
+
+# unit spi-loopback yields nothing
+# Loopback mode
+
+spi-loopback : &spi-mr \ 80 swap @|!
+
+# $Log$
+# Revision 1.2  2010-09-14 00:01:36  jpd
+# SPI working in local loopback mode.
+#

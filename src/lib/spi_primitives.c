@@ -55,11 +55,14 @@ void spi_primitives( void )
 	build_primitive( spi_addr, "&spi" );
 	build_primitive( initq, "spi-initq");
 	build_primitive( read, "spi-read" );
-	build_primitive( write, "spi_write" );
+	build_primitive( write, "spi-write" );
 }
 
 /*
  $Log$
+ Revision 1.3  2010-09-14 00:01:36  jpd
+ SPI working in local loopback mode.
+
  Revision 1.2  2010-09-06 20:28:20  jpd
  *** empty log message ***
 

@@ -1,1 +1,28 @@
+# $Id$
+
+# Configure the SPI interface(s) here
+
+0 spi-master
+0 spi-variable
+0 spi-loopback
+
+# Setup channel 3 of SPI0: 8 bit mode, divider of 15.
+
+\ f00 0 &spi-csr 3 [] !
+
+# test constant
+# transmit hex 55 on channel 3
+
+\ 70055 tc :constant
+
+1 rb :buffer
+1 tb :buffer
+tc tb 1 [] !
+
+0 spi-enable
+
+test : tb 0 spi-write rb 0 spi-read rb 1 [] @ ,h nl
+
 nl nl " Readout Chip Controller" t 1 doPrompt !
+
+# $log$
