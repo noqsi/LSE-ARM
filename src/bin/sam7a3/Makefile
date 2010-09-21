@@ -8,6 +8,7 @@ LDFILE = sam7a3-exec-flash.ld
 ASFLAGS = -mcpu=arm7tdmi -gstabs
 LDFLAGS = -nostartfiles -Lgcc -L$(LIBDIR) 
 LIBS = -llse-arm -lm
+ELF_FILE = lse-sam7a3.elf
 
 %.o:%.c
 	arm-elf-gcc -c $(CFLAGS) $< -o $@
@@ -15,11 +16,21 @@ LIBS = -llse-arm -lm
 %.o:%.s
 	arm-elf-as $(ASFLAGS) $< -o $@
 
+	
 lse-sam7a3.elf:  $(LDFILE) lse-sam7a3.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-sam7a3.o $(LIBS)
 
+upload: lse-sam7a3.elf /tmp/LCK..openocd
+	echo "reset; halt; flash write_image lse-sam7a3.elf 0x100000; reset;" \
+	 | telnet localhost 4444 \
+	|| sleep 15
+
+/tmp/LCK..openocd:
+	touch /tmp/LCK..openocd
+	(openocd 2>openocd.log; rm /tmp/LCK..openocd) & sleep 2
+
 clean:
-	rm -f *.o *.elf
+	rm -f *.o *.elf openocd.log
 
 # $Log$
 # Revision 1.1  2010-06-07 00:39:01  jpd
