@@ -1,0 +1,161 @@
+# ROM dictionary definitions
+
+#    Copyright 2011 John P. Doty and Matthew P. Wampler-Doty
+#
+#    This file is part of LSE-ARM.
+#
+#    LSE-ARM is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    LSE-ARM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with LSE-ARM; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+" ROM-compile.lse" load
+
+" xeq" //XEQ :rom-primitive
+" fixate_literal_string" >string< :rom-primitive
+" make_def" >def< :rom-primitive
+" make_constant" >constant< :rom-primitive
+" make_named_constant" >named_constant< :rom-primitive
+" make_array" >array< :rom-primitive
+" equal" = :rom-primitive
+" fequal" =. :rom-primitive
+" greater" > :rom-primitive
+" fgreater" >. :rom-primitive
+" less" < :rom-primitive
+" fless" <. :rom-primitive
+" equal0" 0= :rom-primitive
+" fequal0" 0=. :rom-primitive
+" greater0" 0> :rom-primitive
+" fgreater0" 0>. :rom-primitive
+" less0" 0< :rom-primitive
+" fless0" 0<. :rom-primitive
+" setflag" true :rom-primitive
+" clearflag" false :rom-primitive
+" iffalse" ifnot :rom-primitive
+" iftrue" if :rom-primitive
+" fetch" @ :rom-primitive
+" fetchp" {@} :rom-primitive
+" store" ! :rom-primitive
+" storep" {!} :rom-primitive
+" append" @!+ :rom-primitive
+" scan" @@+ :rom-primitive
+" add" + :rom-primitive
+" fadd" +. :rom-primitive
+" subtract" - :rom-primitive
+" fsubtract" -. :rom-primitive
+" multiply" * :rom-primitive
+" fmultiply" *. :rom-primitive
+" divide" / :rom-primitive
+" fdivide" /. :rom-primitive
+" neg" neg :rom-primitive
+" fneg" neg. :rom-primitive
+" mod" % :rom-primitive
+" fmodd" %. :rom-primitive
+" and" & :rom-primitive
+" or" | :rom-primitive
+" xor" ^ :rom-primitive
+" not" ~ :rom-primitive
+" ffloat" float :rom-primitive
+" fix" fix :rom-primitive
+" dupp" dup :rom-primitive
+" swap" swap :rom-primitive
+" drop" drop :rom-primitive
+" pick" pick :rom-primitive
+" rot" rot :rom-primitive
+" exitword" exit :rom-primitive
+" exitfalse" && :rom-primitive
+" exitrue" || :rom-primitive
+" jfalse" |jmp :rom-primitive
+" repeat" repeat :rom-primitive
+" repeatrue" &repeat :rom-primitive
+" iterate_init" iterate[ :rom-primitive
+" iterate" ]iterate :rom-primitive
+" anditerate" ]&iterate :rom-primitive
+" count" count 	:rom-primitive
+" r2s" r> :rom-primitive
+" s2r" >r :rom-primitive
+" rcopy" r@ :rom-primitive
+" rdrop" rdrop :rom-primitive
+" literal" ' :rom-primitive
+" noop" {} :rom-primitive
+" cells" [] :rom-primitive
+" get" get :rom-primitive
+" put" put :rom-primitive
+" unget" unget :rom-primitive
+" skip_space" skip_space :rom-primitive
+" skip_to_nl" skip>nl :rom-primitive
+" get_token" <token? :rom-primitive
+" get_name" <name? :rom-primitive
+" find" find :rom-primitive
+" putd" , :rom-primitive
+" putx" ,h :rom-primitive
+" putf" ,. :rom-primitive
+" depth" depth :rom-primitive
+" nl" nl :rom-primitive
+" space" sp :rom-primitive
+" put_string" ,t :rom-primitive
+" ToNumber" >number? :rom-primitive
+" HexNumber" >hex? :rom-primitive
+" delay" usec :rom-primitive
+" fussy" fussy :rom-primitive
+" fast" fast :rom-primitive
+" abort" abort :rom-primitive
+" ifelse" ifelse :rom-primitive
+
+# VM/dictionary "registers":
+# These constants point to variables used by primitives. Note that these are
+# not necessarily cells, so you must use {@} and {!} to load and store them.
+
+# " (cell) &stack" {stack} :rom-constant
+# " (cell) &sp" {sp} :rom-constant
+# " (cell) &rstack" {rstack} :rom-constant
+" (cell) &rsp" {rsp} :rom-constant
+" (cell) &lc" {lc} :rom-constant
+" (cell) &flag" {flag} :rom-constant
+
+" (cell) &deftop" {deftop} :rom-constant
+" (cell) &deflast" {deflast} :rom-constant
+" (cell) &constop" {constop} :rom-constant
+" (cell) &constlast" {constlast} :rom-constant
+
+# VM/dictionary constants:
+
+# " STACK_DIM" {STACK} :rom-constant
+# " RSTACK_DIM" {RSTACK} :rom-constant
+# " defend" {DEFEND} :rom-constant
+# " constend" {CONSTEND} :rom-constant
+
+" D_PREV" {PREV} :rom-constant
+" D_DATA" {DATA} :rom-constant
+" D_PRECEDENCE" {PRECEDENCE} :rom-constant
+" D_NAME" {NAME} :rom-constant
+" D_BODY" {BODY} :rom-constant
+
+" DP_COMPILED" {COMPILED} :rom-constant
+" DP_IMMEDIATE" {IMMEDIATE} :rom-constant
+" DP_SOONER" {SOONER} :rom-constant
+
+#  Compiler constants and pointers to compiler variables
+
+" (cell) &cptr" cptr :rom-constant
+" (cell) &cbuf" cbuf :rom-constant
+" CBUF_DIM" [CBUF] :rom-constant
+" (cell) interpret" interpret :rom-constant
+" 0" 0 :rom-constant
+" 1" 1 :rom-constant
+
+# Low level line prompt character
+
+" (cell) &FlowPrompt" FlowPrompt :rom-constant
+
+init-last
+bye

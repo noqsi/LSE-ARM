@@ -33,8 +33,10 @@ extern cell	*sp,		/* top active item */
        		*lc,		/* interpreter's location counter */
 		*deftop,	/* top of definition dictionary */
 		*deflast,   /* last entry in definition dictionary */
+		*defend,	/* end of def area */
 		*constop,   /* top of constant dictionary */
-		*constlast; /* last entry of constant dictionary */
+		*constlast, /* last entry of constant dictionary */
+		*constend;	/* end of const area */
 		
 extern int flag;   /* the flag register */
 
@@ -100,7 +102,7 @@ compile_to_buffer, literal, noop, cells, putd, putx, putf, depth, nl, space,
 put_string, get_stdin, get_stdout, get_stderr, get_in, put_in, get_out,
 put_out, flush, eofq, ioerrq, ToNumber, HexNumber, delay, sysexit, ffloat, fix,
 openf, closef, iterate_init, iterate, anditerate, count, fussy, fast, ifelse,
-argc, arg, now, scan, jfalse, sprint1, openfd;
+argc, arg, now, scan, jfalse, sprint1, openfd, named_constant, xeq;
 
 void build_primitive( prim p, char *name );
 void build_named_constant( cell c, char *name );

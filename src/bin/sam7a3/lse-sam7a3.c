@@ -180,6 +180,7 @@ void app_main()
 	init_pit( PIT, TICK_HZ );
 	on_tick = blink; 
 	lse_init();
+writechar( 'a' );	/* DEBUG */
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
 	lse_main();

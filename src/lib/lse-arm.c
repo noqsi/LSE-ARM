@@ -1,7 +1,8 @@
 /* $Id$ */
 
 /*
-    Copyright 2004, 2005, 2006, 2009, 2010 John P. Doty and Matthew P. Wampler-Doty
+    Copyright 2004, 2005, 2006, 2009, 2010, 2011 
+    John P. Doty and Matthew P. Wampler-Doty
 
     This file is part of LSE-ARM.
 
@@ -25,6 +26,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
+#include "ROM-dict.h"
+
 cell stack[STACK_DIM+STACK_PAD], rstack[RSTACK_DIM], compile_buf[CBUF_DIM];
 //	defmem[DEFMEM_DIM], constmem[CONSTMEM_DIM];
 
@@ -32,9 +35,9 @@ cell	*sp,		/* top active item */
         *rsp,		/* top active return stack item */
         *lc,		/* interpreter's location counter */
 	*deftop,	/* top of definition dictionary */
-	*deflast,	/* last entry in definition dictionary */
+//	*deflast,	/* last entry in definition dictionary */
 	*constop,	/* top of constant dictionary */
-	*constlast,	/* last entry of constant dictionary */
+//	*constlast,	/* last entry of constant dictionary */
 	*defend,	/* end of definition area */
 	*constend;	/* end of constant area */
 		
@@ -88,7 +91,6 @@ void xeq( void )
 {
 	cell * volatile savedlc = ((cell *) (intptr_t) *(lc+1)) + D_BODY - 1;
 	int sig;
-	
 	sig = setjmp( rexeq );
 
 	switch( sig ) {
@@ -130,8 +132,8 @@ void setup_memory( void )
 	
     	sp = stack + STACK_DIM;
     	rsp = rstack + RSTACK_DIM;
-	deflast = 0;
-	constlast = 0;
+//	deflast = 0;
+//	constlast = 0;
 	cbuf = (cell) compile_buf;
 	
 	free = &free - &end;		/* hack to estimate free mem */
@@ -184,146 +186,11 @@ void build_named_constant( cell c, char *name )
 
 void build_primitives( void )
 {
-    build_primitive( xeq, "//XEQ" );
-    build_primitive( fixate_literal_string, ">string<" );
-    build_primitive( make_def, ">def<" );
-    build_primitive( make_constant, ">constant<" );
-    build_primitive( make_named_constant, ">named_constant<" );
-    build_primitive( make_array, ">array<" );
-    build_primitive( equal, "=" );
-    build_primitive( fequal, "=." );
-    build_primitive( greater, ">" );
-    build_primitive( fgreater, ">." );
-    build_primitive( less, "<" );
-    build_primitive( fless, "<." );
-    build_primitive( equal0, "0=" );
-    build_primitive( fequal0, "0=." );
-    build_primitive( greater0, "0>" );
-    build_primitive( fgreater0, "0>." );
-    build_primitive( less0, "0<" );
-    build_primitive( fless0, "0<." );
-    build_primitive( setflag, "true" );
-    build_primitive( clearflag, "false" );
-    build_primitive( iffalse, "ifnot" );
-    build_primitive( iftrue, "if" );
-    build_primitive( fetch, "@" );
-    build_primitive( fetchp, "{@}" );
-    build_primitive( store, "!" );
-    build_primitive( storep, "{!}" );
-    build_primitive( append, "@!+" );
-    build_primitive( scan, "@@+" );
-    build_primitive( add, "+" );
-    build_primitive( fadd, "+." );
-    build_primitive( subtract, "-" );
-    build_primitive( fsubtract, "-." );
-    build_primitive( multiply, "*" );
-    build_primitive( fmultiply, "*." );
-    build_primitive( divide, "/" );
-    build_primitive( fdivide, "/." );
-    build_primitive( neg, "neg" );
-    build_primitive( fneg, "neg." );
-    build_primitive( mod, "%" );
-    build_primitive( fmodd, "%." );
-    build_primitive( and, "&" );
-    build_primitive( or, "|" );
-    build_primitive( xor, "^" );
-    build_primitive( not, "~" );
-    build_primitive( ffloat, "float" );
-    build_primitive( fix, "fix" );
-    build_primitive( dupp, "dup" );
-    build_primitive( swap, "swap" );
-    build_primitive( drop, "drop" );
-    build_primitive( pick, "pick" );
-    build_primitive( rot, "rot" );
-    build_primitive( exitword, "exit" );
-    build_primitive( exitfalse, "&&" );
-    build_primitive( exitrue, "||" );
-    build_primitive( jfalse, "|jmp" );
-    build_primitive( repeat, "repeat" );
-    build_primitive( repeatrue, "&repeat" );
-    build_primitive( iterate_init, "iterate[" );
-    build_primitive( iterate, "]iterate" );
-    build_primitive( anditerate, "]&iterate" );
-    build_primitive( count, "count" );	
-    build_primitive( r2s, "r>" );
-    build_primitive( s2r, ">r" );
-    build_primitive( rcopy, "r@" );
-    build_primitive( rdrop, "rdrop" );
-    build_primitive( literal, "'" );
-    build_primitive( noop, "{}" );
-    build_primitive( cells, "[]" );
-    build_primitive( get, "get" );
-    build_primitive( put, "put" );
-    build_primitive( unget, "unget" );
-    build_primitive( skip_space, "skip_space" );
-    build_primitive( skip_to_nl, "skip>nl" );
-    build_primitive( get_token, "<token?" );
-    build_primitive( get_name, "<name?" );
-    build_primitive( find, "find" );
-    build_primitive( putd, "," );
-    build_primitive( putx, ",h" );
-    build_primitive( putf, ",." );
-    build_primitive( depth, "depth" );
-    build_primitive( nl, "nl" );
-    build_primitive( space, "sp" );
-    build_primitive( put_string, ",t" );
-    build_primitive( ToNumber, ">number?" );
-    build_primitive( HexNumber, ">hex?" );
-    build_primitive( delay, "usec" );
-    build_primitive( fussy, "fussy" );
-    build_primitive( fast, "fast" );
-    build_primitive( abort, "abort" );
-    build_primitive( ifelse, "ifelse" );
-
-/*
- * VM/dictionary "registers":
- * These constants point to variables used by primitives. Note that these are
- * not necessarily cells, so you must use {@} and {!} to load and store them.
- */
- 
-//    build_named_constant( (cell) &stack, "{stack}" );
-//    build_named_constant( (cell) &sp, "{sp}" );
-//    build_named_constant( (cell) &rstack, "{rstack}" );
-    build_named_constant( (cell) &rsp, "{rsp}" );
-    build_named_constant( (cell) &lc, "{lc}" );
-    build_named_constant( (cell) &flag, "{flag}" );
-        
-    build_named_constant( (cell) &deftop, "{deftop}" );
-    build_named_constant( (cell) &deflast, "{deflast}" );
-    build_named_constant( (cell) &constop, "{constop}" );
-    build_named_constant( (cell) &constlast, "{constlast}" );
-        
-/*
- * VM/dictionary constants:
- */
+	// Most primitives are static in ROM, but these must be built
+	// at initialization.
 	
-//    build_named_constant( STACK_DIM, "{STACK}" );
-//    build_named_constant( RSTACK_DIM, "{RSTACK}" );
-    build_named_constant( defend, "{DEFEND}" );
-    build_named_constant( constend, "{CONSTEND}" );
-        
-    build_named_constant( D_PREV, "{PREV}" );
-    build_named_constant( D_DATA, "{DATA}" );
-    build_named_constant( D_PRECEDENCE, "{PRECEDENCE}" );
-    build_named_constant( D_NAME, "{NAME}" );
-    build_named_constant( D_BODY, "{BODY}" );
-        
-    build_named_constant( DP_COMPILED, "{COMPILED}" );
-    build_named_constant( DP_IMMEDIATE, "{IMMEDIATE}" );
-    build_named_constant( DP_SOONER, "{SOONER}" );
-
-/* Compiler constants and pointers to compiler variables */
-	
-    build_named_constant( (cell) &cptr, "cptr" );
-    build_named_constant( (cell) &cbuf, "cbuf" );
-    build_named_constant( CBUF_DIM, "[CBUF]" );
-    build_named_constant( (cell) interpret, "interpret" );
-    build_named_constant( 0, "0" );
-    build_named_constant( 1, "1" );
-    
-/* Low level line prompt character */
-
-    build_named_constant( (cell) &FlowPrompt, "FlowPrompt" );
+	build_named_constant( defend, "{DEFEND}" );
+	build_named_constant( constend, "{CONSTEND}" );
 }
     
 void bootcompile( void )
@@ -332,6 +199,7 @@ void bootcompile( void )
 		get_name();
 		find();
 //		if( !flag ) {printf( "not found \n"); exit(1);}
+if( !flag ) { writechar( 'Z' ); for(;;); }
 		*--sp = (cell) &cptr; append();
 	}
 	ascii_to_literal( "exit" );

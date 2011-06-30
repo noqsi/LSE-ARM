@@ -1,0 +1,111 @@
+# Compile LSE to C code for initial read-only dictionary.
+
+#     Copyright 2011 John P. Doty
+
+#     ROM-compile.lse is free software;
+#     you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation; either version 2 of the License, or
+#     (at your option) any later version.
+
+#     ROM-compile.lse is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+
+#     You should have received a copy of the GNU General Public License
+#     along with ROM-compile.lse; if not, write to the Free Software
+#     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+# This version can compile primitives and named constants.
+# Eventually, I'd like to be able to compile regular definitions, too.
+
+# n c dclname yields nothing
+# generate unique C name based on string address in generating dictionary
+dclname : ,t ,h
+
+# n c dclhead yields nothing
+# generate declatation header
+dclhead : nl " const cell " ,t dclname " [] = {" ,t nl
+
+# ptrfield yields nothing
+# introduce a pointer
+ptrfield : " 	(cell)(intptr_t) " ,t
+
+# comma yields nothing
+# print a comma, followed by newline
+comma : " ," ,t nl
+
+# cprev holds the name of the previous constant dictionary entry
+# deprev same for main dictionary
+cprev :variable
+dprev :variable
+
+# s bychar yields nothing
+# deconstruct a string
+[bychar] :variable
+(bychar) : comma " 	" ,t [bychar] @@+ ,
+bychar : [bychar] ! comma " 	" ,t [bychar] @@+ dup , (bychar) iterate
+
+# dcltail yields nothing
+dcltail : nl " };" ,t nl
+
+# n c namefield yields nothing
+# generate name field for dictionary entry
+# note that this points to the actual string, not
+# the dictionary entry that holds it.
+namefield : \
+	ptrfield " (" ,t " Const__" dclname " +D_NAME)" ,t
+
+# s rom-string yields nothing
+# put the string in the ROM constant dictionary
+
+rom-string : \
+	dup " Const__" dclhead \
+	ptrfield " stringconstant" ,t comma \
+	ptrfield cprev @ " Const__" dclname comma \
+	dup cprev ! \
+	" 	DP_COMPILED" ,t \
+	bychar \
+	dcltail
+
+# s name :rom-primitive yields nothing
+# Define a primitive
+# s is the name of a C function
+
+:rom-primitive : \
+	:def dup rom-string dup " Dict__" dclhead \
+	ptrfield swap ,t comma \
+	ptrfield dprev @ " Dict__" dclname comma \
+	dup dprev ! \
+	" 	DP_COMPILED" ,t comma \
+	namefield dcltail \
+	cinit
+' :rom-primitive sooner
+
+# s name :rom-constant yields nothing
+# Define a constant
+# s is a C constant expression
+
+:rom-constant : \
+	:def dup rom-string dup " Dict__" dclhead \
+	ptrfield " named_constant" ,t comma \
+	ptrfield dprev @ " Dict__" dclname comma \
+	dup dprev ! \
+	" 	DP_COMPILED" ,t comma \
+	namefield comma \
+	" 	" ,t ,t dcltail \
+	cinit
+' :rom-constant sooner
+
+# Generate definitions to force the links at the end of the lists to 0
+
+" #define Const__0 0" ,t nl
+" #define Dict__0 0" ,t nl
+
+# init-last yields nothing
+# This should be invoked after the last definition to
+# initialize the dictionary links.
+init-last : nl \
+	" cell *deflast=(cell *)" ,t dprev @ " Dict__" dclname " ;" ,t nl \
+	" cell *constlast=(cell *)" ,t cprev @ " Const__" dclname " ;" ,t nl
