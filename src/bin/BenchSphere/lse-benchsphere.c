@@ -30,7 +30,7 @@ const unsigned mck_hz = 18432000;
 Provide an "application". Placeholder.
 */
 
-char app_lse[] = "1 doPrompt !\n";
+char app_lse[] = "\" \nBench Sphere\n\" ,t 1 doPrompt !\n";
 
 /*
 A little custom feature is to blink a light at 1 hz.
@@ -127,6 +127,7 @@ Enable reset via NRST pin.
 Turn on peripheral clocks, as needed.
 */
 
+	PMC->pcer = 0xffffffff;		/* for dev, turn 'em all on */
 
 /*
 Configure IO pins here. Other peripheral configuration can happen in drivers,
@@ -135,10 +136,11 @@ for clarity and to avoid conflict.
 */
 
 	PIOA->asr = 0xc0000000;	/* enable TXD0, RXD0 */
+	PIOA->asr = 0x03e00000;	/* enable PWM 3-7 */
 	PIOA->pdr = 0xc0000000;	/* relinquish pins to USART0 */
-	PIOA->oer = 0x80000000;	/* enable output on TXD0 */
-	PIOA->oer = 0x03300000;	/* enable LED's */
-	PIOA->sodr = 0x03300000;	/* turn off LED's */
+	PIOA->pdr = 0x03e00000; /* relinquish pins to PWM */
+	PIOA->oer = 0x00100000;	/* enable heartbeat LED */
+	PIOA->sodr = 0x00100000;	/* turn off LED */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning

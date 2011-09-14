@@ -1,0 +1,18 @@
+File{
+
+\ 4000 J-push :constant
+\ 2000 J-right :constant
+\ 1000 J-left :constant
+\ 200 J-down :constant
+\ 100 J-up :constant
+
+\ 7300 J-bits :constant
+
+\ fffff63c J-reg :constant	# Port B bit status
+
+J-state :variable
+J-same : && drop 0
+J-different : || dup J-state !
+Joy : J-reg @ J-bits & J-bits ^ dup J-state @ = J-same J-different
+
+}File

@@ -1,0 +1,94 @@
+File{
+
+# n wait-until yields nothing
+# spins until the msec timer is >= n
+wait-until : dup msec swap < &repeat drop
+
+# n wait yields nothing
+# waits until msec>epoch+n
+# resets the epoch to epoch+n
+# the intent is to schedule events without cumulative error
+epoch :variable
+wait : epoch @ + dup epoch ! wait-until
+
+# epoch-now yields nothing
+# intializes the epoch to the present time
+epoch-now : msec epoch !
+
+# Bit manipulation infrastructure
+
+# n 1<< yields 2n
+
+1<< : 2 *
+
+# m n << yields m*2^n
+
+<< : 1<< iterate
+
+# n bit yields 2^n
+
+bit : 1 swap <<
+
+# Base of PWM on SAM7A3
+
+\ fffcc000 PWM :constant
+
+# PWM channels
+# n PWM[] yields addr
+
+\ 200 PWM + PWM0 :constant
+PWM[] : \ 20 * PWM0 +
+
+# Common registers
+
+\ 00 PWM + PWM_MR  :constant
+\ 04 PWM + PWM_ENA :constant
+\ 08 PWM + PWM_DIS :constant
+\ 0c PWM + PWM_SR  :constant
+\ 10 PWM + PWM_IER :constant
+\ 14 PWM + PWM_IDR :constant
+\ 18 PWM + PWM_IMR :constant
+\ 1c PWM + PWM_ISR :constant
+
+# Channel registers
+
+PWM_CMR[] : PWM[]
+PWM_CDTY[] : PWM[] \ 04 +
+PWM_CPRD[] : PWM[] \ 08 +
+PWM_CCNT[] : PWM[] \ 0c +
+PWM_CUPD[] : PWM[] \ 10 +
+
+
+# n PWM-enable enables PWM n
+
+PWM-enable : bit PWM_ENA !
+PWM-disable : bit PWM_DIS !
+
+# d c PWM-set yields nothing
+# Sets the duty cycle on channel c to d
+# Since the "on the fly" logic seems buggy, disable the channel,
+# change the parameter, re-enable. To minimize the resulting glitch,
+# this word queues addresses and data on the stack before it touches
+# the hardware, allowing it to execute the change in minimum time.
+
+chan :variable
+duty :variable
+PWM-set : chan ! duty ! \
+	chan @ bit PWM_ENA \
+	duty @ chan @ PWM_CDTY[] \
+	chan @ bit PWM_DIS \
+	! ! !
+
+# For now, drive PWM7 with a period of 200 MCLK
+
+200 7 PWM_CPRD[] !
+
+# make +-100 the range (think percent driving an H bridge)
+
+# p s yields nothing
+# sets the output to p
+s : 100 + 7 PWM-set
+
+
+
+}File
