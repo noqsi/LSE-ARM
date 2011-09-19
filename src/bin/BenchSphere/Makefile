@@ -17,8 +17,9 @@ ELF_FILE = lse-sam7a3.elf
 	arm-elf-as $(ASFLAGS) $< -o $@
 
 	
-lse-benchsphere.elf:  $(LDFILE) lse-benchsphere.o
-	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-benchsphere.o $(LIBS)
+lse-benchsphere.elf:  $(LDFILE) lse-benchsphere.o pwm_background.o
+	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) \
+		lse-benchsphere.o pwm_background.o $(LIBS)
 
 upload: lse-sam7a3.elf /tmp/LCK..openocd
 	echo "reset; halt; flash write_image lse-benchsphere.elf 0x100000; reset;" \

@@ -8,7 +8,7 @@ struct pwm_channel {
 };
 
 
-struct pwm {
+struct pwmc {
 	volatile uint32_t mr, ena, dis, sr, ier, idr, imr, isr,
 		reserved[120];
 	struct pwm_channel channel[8];

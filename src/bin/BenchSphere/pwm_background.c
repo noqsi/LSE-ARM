@@ -1,6 +1,9 @@
-#include <pwm.h>
-#include <sam7a3.h>
+#include "memory_7a3.h"
+#include "pwm.h"
+#include "aic.h"
+#include "peripheral_id_7a3.h"
 #include <math.h>
+#include "lse-arm.h"
 
 
 /* The ATMEL PWM goes off the rails if you set the duty cycle too
@@ -42,21 +45,21 @@ static const int channels[] = {7, 6, 5, 4, 3};
 
 static void pwm_isr( void )
 {
-	struct ipwwm *pp = ipwms+which_ipwm;
 	uint32_t maxdty = period-PWM_GUARD;
 	
-	static unsigned rstep, rstate, sstep;
+	static unsigned step, state, sstep;
 	static int ss=1;		/* suspension field sign */
-	uint32_t *dty = idty[state];
+	int *dty = idty[state];
+	int i;
 	
 	for( i=0; i<POLES; i+=1 ) {
-		int d = dty[i] + ss * susp[i];
+		int d = dty[i] + ss * isusp[i];
 		if( d > maxdty ) d = maxdty;
 		else if( d < PWM_GUARD ) d = PWM_GUARD;
 		PWM->channel[channels[i]].cupd = d;
 	}
 
-	if( ++sstep >= HCYCLES ) {	/* switch suspension sign */
+	if( ++sstep >= hcycles ) {	/* switch suspension sign */
 		sstep = 0;
 		ss = -ss;
 	}
@@ -66,10 +69,10 @@ static void pwm_isr( void )
 		
 		if( ++state >= ROTATION ) {
 			state = 0;
-			if( newpwm ) which_pwm = !which_pwm;
 		}
 	}
-	
+	#include "aic.h"
+
 	/* Do the touches to finish with the PWM and AIC interrupt hw */
 	
 	AIC->eoicr = PWM->isr;
@@ -95,7 +98,7 @@ static void pwm_update( void )
 		scale = mid - (float) PWM_GUARD;
 	int n;
 	
-	for( n = 0; n < ROTATION, n += 1 ) {
+	for( n = 0; n < ROTATION; n += 1 ) {
 		float 	sn = sin( nr * n ),
 			cn = cos( nr * n ),
 			x = scale * (ca * cd * cn + sd * sn),
@@ -117,6 +120,8 @@ static void pwm_update( void )
 
 static void pwm_start( void )
 {
+	int i;
+	
 	PWM->dis = ALL_CHANNELS;
 	PWM->mr = 0;		/* MCK straight through */
 	PWM->ier = MY_CHANNELS;
@@ -130,8 +135,8 @@ static void pwm_start( void )
 	
 	/* Set up to vector the interrupt */
 
-	AIC->svr[ PWM_ID ] = (uint32_t) pwm_isr;
-	AIC->iecr = bit( PWM_ID );
+	AIC->svr[ PWMC_ID ] = (uint32_t) pwm_isr;
+	AIC->iecr = bit( PWMC_ID );
 	
 	/* Make sure the tables are set up */
 	
@@ -155,7 +160,7 @@ void build_pwm_primitives( void ) {
 	build_named_constant( (cell) &alpha, "alpha");
 	build_named_constant( (cell) &delta, "delta");
 	build_named_constant( (cell) &zsf, "zsf");
-	build_named_constant( (cell) &xysf, "xysf);
+	build_named_constant( (cell) &xysf, "xysf");
 	build_named_constant( (cell) &rotf, "rotf");
 	build_named_constant( (cell) &rotf, "rotf");
 	build_named_constant( (cell) &rotf, "rotf");
@@ -166,5 +171,5 @@ void build_pwm_primitives( void ) {
 	
 	build_primitive( pwm_start, "pwm_start" );
 	build_primitive( pwm_stop, "pwm_stop" );
-	build_primitive( pwn_update, "pwm_update" );
+	build_primitive( pwm_update, "pwm_update" );
 }
