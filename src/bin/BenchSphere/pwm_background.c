@@ -1,0 +1,170 @@
+#include <pwm.h>
+#include <sam7a3.h>
+#include <math.h>
+
+
+/* The ATMEL PWM goes off the rails if you set the duty cycle too
+ * close to the limits via the update register. 
+ * Experimentally, it appears that staying more than two ticks away from
+ * the extremes suffices to prevent this.
+ */
+ 
+#define PWM_GUARD 2
+
+#define ROTATION 64	/* number of states per rotation */
+#define POLES 5		/* number of poles in stator */
+
+static int idty[ROTATION][POLES];
+static int isusp[POLES];
+
+/* Adjustable parameters */
+
+static float 
+	alpha,	/* azimuth of rotation axis, degrees */
+	delta,	/* elevation of rotation axis, degrees */
+	zsf,	/* z suspension, -1<zsf<1 */
+	xysf,	/* xy suspension, -1<xysf<1 */
+	rotf;	/* rotation field magnitude, -1<rotf<1 */
+
+static unsigned
+	period=1000,	/* default PWM clock period */
+	hcycles = 4,	/* half cycle of suspension field */
+	steps = 100;	/* periods per rotation state */
+
+/* Specs for the PWM channels */
+/* Z, +X, -X, +Y, -Y */
+
+static const int channels[] = {7, 6, 5, 4, 3};
+
+#define ALL_CHANNELS	0xff
+#define MY_CHANNELS	0xf8
+	
+
+static void pwm_isr( void )
+{
+	struct ipwwm *pp = ipwms+which_ipwm;
+	uint32_t maxdty = period-PWM_GUARD;
+	
+	static unsigned rstep, rstate, sstep;
+	static int ss=1;		/* suspension field sign */
+	uint32_t *dty = idty[state];
+	
+	for( i=0; i<POLES; i+=1 ) {
+		int d = dty[i] + ss * susp[i];
+		if( d > maxdty ) d = maxdty;
+		else if( d < PWM_GUARD ) d = PWM_GUARD;
+		PWM->channel[channels[i]].cupd = d;
+	}
+
+	if( ++sstep >= HCYCLES ) {	/* switch suspension sign */
+		sstep = 0;
+		ss = -ss;
+	}
+	
+	if( ++step >= steps ) {		/* advance rotation state */
+		step = 0;
+		
+		if( ++state >= ROTATION ) {
+			state = 0;
+			if( newpwm ) which_pwm = !which_pwm;
+		}
+	}
+	
+	/* Do the touches to finish with the PWM and AIC interrupt hw */
+	
+	AIC->eoicr = PWM->isr;
+}
+
+/* LSE interface */
+
+/* Since any glitch will be much shorter the the coil time constants,
+ * we can simply recompute the duty cycle tables here, without
+ * race condition worries.
+ */
+
+static void pwm_update( void )
+{
+	const float dr = M_PI/180., nr = 2.0*M_PI/(float) ROTATION;
+	float	a = dr*alpha,
+		d = dr*delta,
+		sa = sin( a ),
+		ca = cos( a ),
+		sd = sin( d ),
+		cd = cos( d ),
+		mid = ((float) period)/2.0 + 0.5,
+		scale = mid - (float) PWM_GUARD;
+	int n;
+	
+	for( n = 0; n < ROTATION, n += 1 ) {
+		float 	sn = sin( nr * n ),
+			cn = cos( nr * n ),
+			x = scale * (ca * cd * cn + sd * sn),
+			y = scale * (-ca * sd * cn + cd * sn),
+			z = scale * (-sa * cn);
+		int *dp = idty[n];
+		
+		dp[0] = mid + z;
+		dp[1] = mid + x;
+		dp[2] = mid - x;
+		dp[3] = mid + y;
+		dp[4] = mid - y;
+	}
+	
+	isusp[0] = mid + scale * zsf;
+	isusp[1] = isusp[2] = isusp[3] = isusp[4] = mid + scale * xysf;
+}	
+	
+
+static void pwm_start( void )
+{
+	PWM->dis = ALL_CHANNELS;
+	PWM->mr = 0;		/* MCK straight through */
+	PWM->ier = MY_CHANNELS;
+	PWM->imr = MY_CHANNELS;
+	for( i=0; i<POLES; i+=1 ) {
+		struct pwm_channel *c = PWM->channel + channels[i];
+		c->cmr = 0;
+		c->cprd = period;
+		c->cdty = period/2;	/* safe value to start */
+	}
+	
+	/* Set up to vector the interrupt */
+
+	AIC->svr[ PWM_ID ] = (uint32_t) pwm_isr;
+	AIC->iecr = bit( PWM_ID );
+	
+	/* Make sure the tables are set up */
+	
+	pwm_update();
+
+	/* Here we go... */
+	
+	PWM->ena = MY_CHANNELS;
+}
+
+static void pwm_stop( void ) { PWM->dis = ALL_CHANNELS; }
+
+
+void build_pwm_primitives( void ) {
+
+/* Addresses of directly accessible variables */
+
+	build_named_constant( (cell) &period, "period");
+	build_named_constant( (cell) &hcycles, "hcycles");
+	build_named_constant( (cell) &steps, "steps");
+	build_named_constant( (cell) &alpha, "alpha");
+	build_named_constant( (cell) &delta, "delta");
+	build_named_constant( (cell) &zsf, "zsf");
+	build_named_constant( (cell) &xysf, "xysf);
+	build_named_constant( (cell) &rotf, "rotf");
+	build_named_constant( (cell) &rotf, "rotf");
+	build_named_constant( (cell) &rotf, "rotf");
+	build_named_constant( (cell) idty, "idty" );
+	build_named_constant( (cell) isusp, "isusp" );
+	
+/* control functions */
+	
+	build_primitive( pwm_start, "pwm_start" );
+	build_primitive( pwm_stop, "pwm_stop" );
+	build_primitive( pwn_update, "pwm_update" );
+}

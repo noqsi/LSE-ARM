@@ -19,6 +19,7 @@
 void lse_init( void );
 void lse_main( void );
 void copy_static( void );
+void build_pwm_primitives( void );
 
 /*
 Let everyone know what the master clock frequency is.
@@ -184,6 +185,7 @@ void app_main()
 	lse_init();
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
+	build_pwm_primitives();
 	lse_main();
 }
 
