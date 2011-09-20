@@ -80,7 +80,7 @@ extern cell FlowPrompt;		/* line prompt character */
 // #define CONSTMEM_DIM	3000
 #define CBUF_DIM	160
 #define STRINGBUF_DIM	200
-#define RESERVE		1300	// Cells to reserve for C stack and heap
+#define RESERVE		1600	// Cells to reserve for C stack and heap
 
 /*
  * Primitive functions
