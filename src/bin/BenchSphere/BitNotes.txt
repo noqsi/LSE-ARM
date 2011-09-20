@@ -1,0 +1,5 @@
+Bitnotes:
+
+Free up PA23, PA26, PA27, PA28, PA29 by cutting S13-S17. Disable the CAN interfaces they serve by removing jumpers J19, J20, J22, J23.
+
+Use PA29 to shadow susp field, PA28 to pulse at rotation phase zero.

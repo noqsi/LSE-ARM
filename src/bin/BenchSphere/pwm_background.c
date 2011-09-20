@@ -1,6 +1,7 @@
 #include "memory_7a3.h"
 #include "pwm.h"
 #include "aic.h"
+#include "pio.h"
 #include "peripheral_id_7a3.h"
 #include <math.h>
 #include "lse-arm.h"
@@ -41,7 +42,11 @@ static const int channels[] = {7, 6, 5, 4, 3};
 
 #define ALL_CHANNELS	0xff
 #define MY_CHANNELS	0xf8
-	
+
+/* trigger bits for scope */
+
+#define SUSP_BIT 0x20000000
+#define PHASE_BIT 0x10000000	
 
 static void pwm_isr( void )
 {
@@ -62,16 +67,19 @@ static void pwm_isr( void )
 	if( ++sstep >= hcycles ) {	/* switch suspension sign */
 		sstep = 0;
 		ss = -ss;
+		if( ss > 0 ) PIOA->sodr = SUSP_BIT;
+		else PIOA->codr = SUSP_BIT;
 	}
 	
+	PIOA->codr = PHASE_BIT;
 	if( ++step >= steps ) {		/* advance rotation state */
 		step = 0;
+		PIOA->sodr = PHASE_BIT;	/* trigger scope */
 		
 		if( ++state >= ROTATION ) {
 			state = 0;
 		}
 	}
-	#include "aic.h"
 
 	/* Do the touches to finish with the PWM and AIC interrupt hw */
 	

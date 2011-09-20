@@ -142,6 +142,7 @@ for clarity and to avoid conflict.
 	PIOA->pdr = 0x03e00000; /* relinquish pins to PWM */
 	PIOA->oer = 0x00100000;	/* enable heartbeat LED */
 	PIOA->sodr = 0x00100000;	/* turn off LED */
+	PIOA->oer = 0x3c000000;	/* enable extra bit-bang outputs */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
