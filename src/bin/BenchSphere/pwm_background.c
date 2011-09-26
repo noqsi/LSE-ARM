@@ -74,10 +74,10 @@ static void pwm_isr( void )
 	PIOA->codr = PHASE_BIT;
 	if( ++step >= steps ) {		/* advance rotation state */
 		step = 0;
-		PIOA->sodr = PHASE_BIT;	/* trigger scope */
 		
 		if( ++state >= ROTATION ) {
 			state = 0;
+			PIOA->sodr = PHASE_BIT;	/* trigger scope */
 		}
 	}
 
@@ -103,7 +103,7 @@ static void pwm_update( void )
 		sd = sin( d ),
 		cd = cos( d ),
 		mid = ((float) period)/2.0 + 0.5,
-		scale = mid - (float) PWM_GUARD;
+		scale = rotf * (mid - (float) PWM_GUARD);
 	int n;
 	
 	for( n = 0; n < ROTATION; n += 1 ) {
@@ -121,8 +121,8 @@ static void pwm_update( void )
 		dp[4] = mid - y;
 	}
 	
-	isusp[0] = mid + scale * zsf;
-	isusp[1] = isusp[2] = isusp[3] = isusp[4] = mid + scale * xysf;
+	isusp[0] = scale * zsf;
+	isusp[1] = isusp[2] = isusp[3] = isusp[4] = scale * xysf;
 }	
 	
 
@@ -169,8 +169,6 @@ void build_pwm_primitives( void ) {
 	build_named_constant( (cell) &delta, "delta");
 	build_named_constant( (cell) &zsf, "zsf");
 	build_named_constant( (cell) &xysf, "xysf");
-	build_named_constant( (cell) &rotf, "rotf");
-	build_named_constant( (cell) &rotf, "rotf");
 	build_named_constant( (cell) &rotf, "rotf");
 	build_named_constant( (cell) idty, "idty" );
 	build_named_constant( (cell) isusp, "isusp" );
