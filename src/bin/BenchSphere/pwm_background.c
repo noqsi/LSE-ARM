@@ -27,7 +27,9 @@ static float
 	alpha,	/* azimuth of rotation axis, degrees */
 	delta,	/* elevation of rotation axis, degrees */
 	zsf,	/* z suspension, -1<zsf<1 */
+	zbias,	/* dc bias on above */
 	xysf,	/* xy suspension, -1<xysf<1 */
+	xybias,	/* dc bias on above */
 	rotf;	/* rotation field magnitude, -1<rotf<1 */
 
 static unsigned
@@ -103,22 +105,24 @@ static void pwm_update( void )
 		sd = sin( d ),
 		cd = cos( d ),
 		mid = ((float) period)/2.0 + 0.5,
-		scale = rotf * (mid - (float) PWM_GUARD);
+		scale = (mid - (float) PWM_GUARD);
+	int	zb = scale * zbias,
+		xyb = scale * xybias;
 	int n;
 	
 	for( n = 0; n < ROTATION; n += 1 ) {
 		float 	sn = sin( nr * n ),
 			cn = cos( nr * n ),
-			x = scale * (ca * cd * cn + sd * sn),
-			y = scale * (-ca * sd * cn + cd * sn),
-			z = scale * (-sa * cn);
+			x = rotf * scale * (ca * cd * cn + sd * sn),
+			y = rotf * scale * (-ca * sd * cn + cd * sn),
+			z = rotf * scale * (-sa * cn);
 		int *dp = idty[n];
 		
-		dp[0] = mid + z;
-		dp[1] = mid + x;
-		dp[2] = mid - x;
-		dp[3] = mid + y;
-		dp[4] = mid - y;
+		dp[0] = mid + z + zb;
+		dp[1] = mid + x + xyb;
+		dp[2] = mid - x + xyb;
+		dp[3] = mid + y + xyb;
+		dp[4] = mid - y + xyb;
 	}
 	
 	isusp[0] = scale * zsf;
@@ -168,7 +172,9 @@ void build_pwm_primitives( void ) {
 	build_named_constant( (cell) &alpha, "alpha");
 	build_named_constant( (cell) &delta, "delta");
 	build_named_constant( (cell) &zsf, "zsf");
+	build_named_constant( (cell) &zbias, "zbias");
 	build_named_constant( (cell) &xysf, "xysf");
+	build_named_constant( (cell) &xybias, "xybias");
 	build_named_constant( (cell) &rotf, "rotf");
 	build_named_constant( (cell) idty, "idty" );
 	build_named_constant( (cell) isusp, "isusp" );
