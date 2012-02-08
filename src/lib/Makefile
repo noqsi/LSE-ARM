@@ -1,9 +1,9 @@
 # $Id$
 
-AS = arm-elf-as
-CC = arm-elf-gcc
-AR = arm-elf-ar
-CFLAGS = -g -Wall -I../include
+AS = arm-linux-gnueabi-as
+CC = arm-linux-gnueabi-gcc
+AR = arm-linux-gnueabi-ar
+CFLAGS = -g -Wall -I../include -mcpu=arm7tdmi -msoft-float
 
 %.o : %.s
 	$(AS) -o $@ $<
