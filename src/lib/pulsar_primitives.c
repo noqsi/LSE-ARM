@@ -7,7 +7,7 @@ extern struct pulsar pulsar_adc[];
 
 static void read_pulsar( void )
 {
-	*sp = (cell) pulsar_read( pulsar_adc[ *sp ]);
+	*sp = (cell) pulsar_read( pulsar_adc + *sp );
 }
 
 void pulsar_primitives( void )

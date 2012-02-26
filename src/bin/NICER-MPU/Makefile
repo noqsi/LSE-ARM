@@ -1,5 +1,8 @@
 # $Id$
 
+AS = arm-elf-as
+CC = arm-elf-gcc
+
 CFLAGS  = -g -O -I../../include -mcpu=arm7tdmi -msoft-float -Wall
 
 LIBDIR = ../../lib
@@ -10,15 +13,21 @@ LDFLAGS = -msoft-float -nostartfiles -Lgcc -L$(LIBDIR)
 LIBS = -llse-arm -lm
 ELF_FILE = lse-mpu.elf
 
-%.o:%.c
-	arm-elf-gcc -c $(CFLAGS) $< -o $@
+# %.o:%.c
+#	arm-elf-gcc -c $(CFLAGS) $< -o $@
 
-%.o:%.s
-	arm-elf-as $(ASFLAGS) $< -o $@
+# %.o:%.s
+#	arm-elf-as $(ASFLAGS) $< -o $@
 
+# This rule strips comments and blank lines from LSE source.
+
+%.txt:%.lse
+	sed -e '/^#/d' -e '/^$$/d' $< >$@
 	
-lse-mpu.elf:  $(LDFILE) lse-mpu.o
-	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-mpu.o $(LIBS)
+lse-mpu.elf:  $(LDFILE) lse-mpu.o app_lse.o
+	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-mpu.o app_lse.o $(LIBS)
+
+app_lse.o : mpu.txt
 
 upload: lse-mpu.elf /tmp/LCK..openocd
 	echo "reset; halt; flash write_image lse-mpu.elf 0x100000; reset;" \
@@ -30,7 +39,7 @@ upload: lse-mpu.elf /tmp/LCK..openocd
 	(openocd 2>openocd.log; rm /tmp/LCK..openocd) & sleep 2
 
 clean:
-	rm -f *.o *.elf openocd.log
+	rm -f *.o *.elf openocd.log mpu.txt
 
 # $Log$
 # Revision 1.1  2010-06-07 00:39:01  jpd

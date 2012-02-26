@@ -2,6 +2,7 @@
 
 /* Bit banging driver for an Analog Devices "pulsar" ADC. */
 
+#include "pio.h"
 #include "pulsar.h"
 
 #define MAX_WAIT 1000	/* polling longer than this indicates trouble */

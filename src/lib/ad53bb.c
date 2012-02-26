@@ -2,6 +2,7 @@
  * bit-bang write of AD5308 et al. DACs
  */
 
+#include "pio.h"
 #include "ad53bb.h"
 
 /* 
@@ -12,14 +13,16 @@
 
 void ad53_write( struct ad53 *p, uint16_t v )
 {
+	int i;
+	
 	p->pio->sodr = p->sync;		/* Be sure SYNC is high to start */
 	p->pio->codr = p->sclk;		/* and SCLK low */
 	
 	p->pio->codr = p->sync;		/* thus we begin */
 	
 	for( i = 0; i < 16; i += 1 ) {
-		if( v & 0x8000 ) p->pio->sodr = din;
-		else p->pio->codr = din;
+		if( v & 0x8000 ) p->pio->sodr = p->din;
+		else p->pio->codr = p->din;
 		p->pio->sodr = p->sclk;
 		p->pio->codr = p->sclk;
 		v <<= 1;
