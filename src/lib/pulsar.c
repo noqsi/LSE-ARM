@@ -1,34 +1,42 @@
 /* $Id$ */
 
-/* Bit banging driver for a 16 bit Analog Devices "pulsar" ADC. */
+/* Bit banging driver for an Analog Devices "pulsar" ADC. */
 
-#include "lse.h"
 #include "pulsar.h"
 
-static inline int_16 grabbit( void )
-{
-	PIO->codr = SCK;		/* Clock bit out */
-	PIO->sodr = SCK;		/* Leave SCK high */
-	return (PIO->pdsr & SDO) != 0;	/* Grab the bit */
-}
+#define MAX_WAIT 1000	/* polling longer than this indicates trouble */
 
-void pulsar16( void )
+/* 
+ * Do the bit-banging.
+ * This should be called with interrupts masked. 
+ */
+
+int32_t pulsar_read( struct pulsar *p )
 {
-	int_16 val = 0;
-	int i;
+	uint32_t val;
+	unsigned i;
 	
-	PIO->sodr = CNV;		/* Pulse CNV faster than conversion time */
-	PIO->codr = CNV;
+	p->pio->sodr = p->cnv;		/* Pulse CNV faster than conversion time */
+	p->pio->codr = p->cnv;
+	p->pio->sodr = p->sck;		/* make sure sck is high */
 	
-	while( PIO->pdsr & SDO );	/* Wait for SDO low */
+	i = 0;
+	val = 0;
 	
-	for( i = 0; i < 16; i += 1 ) {	/* Grab 16 bits */
+	while( p->pio->pdsr & p->sdo ) 	/* Wait for SDO low */
+		if( ++i > MAX_WAIT ) return PULSAR_TIMEOUT;
+	
+	for( i = 0; i < p->bits; i += 1 ) {	/* Grab the bits */
 		val <<= 1;
-		val |= grabbit();
+		p->pio->codr = p->sck;
+		p->pio->sodr = p->sck;
+		if( p->pio->pdsr & p->sdo ) val |= 1;
 	}
 	
-	(void) grabbit();		/* Release SDO */
+	p->pio->codr = p->sck;		/* Release SDO */
 
-	*--sp = val;
+	if( val & p->snx ) val |= p->snx;
+	
+	return (int32_t) val;
 }
 

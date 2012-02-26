@@ -12,7 +12,8 @@ CFLAGS = -g -Wall -I../include
 	$(CC) -c $(CFLAGS) $< -o $@
 
 OBJS =  init_lse.o strings.o lse-arm.o primitives.o usart.o C_startup.o copy_static.o aic.o \
-	irq_stack.o pit.o spi_driver.o spi_primitives.o math.o
+	irq_stack.o pit.o spi_driver.o spi_primitives.o math.o pulsar.o \
+	pulsar_primitives.o ad53bb.o ad53_primitives.o
 
 all : boot.o liblse-arm.a
 
