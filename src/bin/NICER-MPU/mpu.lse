@@ -1,0 +1,87 @@
+dacreset : \ f000 0 !ad53		# full DAC reset
+
+dacreset	# do it on initialization
+
+# dac dac-select yields nothing
+# decode dac-chip and dac-abits from dac number
+
+dac-chip :variable
+dac-abits :variable
+
+dac-select : dup 8 / dac-chip ! 7 & \ 1000 * dac-abits !
+
+8 dac-shadow :array	# shadow array containing DAC values
+
+# val dac save-shadow yields val dac
+
+dacnum :variable
+save-shadow : dacnum ! dup dac-shadow dacnum @ [] ! dacnum @
+
+# val8 dac !dacval yields nothing
+
+!dacval : save-shadow dac-select \ ff & 16 * dac-abits @ | dac-chip @ !ad53
+
+# level fpa !flld yields nothing
+
+!flld : 2 * !dacval
+
+# fpa %flld yields nothing
+# Print value from shadow
+
+%shadow : dac-shadow swap [] @ , nl
+%flld : 2 * %shadow
+
+!slld : 2 * 1 + !dacval
+
+%slld : 2 * 1 + %shadow
+
+# Control bits on port B
+
+\ fffff600 PIOB :constant
+\ 30 PIOB + B-SODR :constant
+\ 34 PIOB + B-CODR :constant
+\ 3c PIOB + B-PDSR :constant
+
+# n >chain yields nothing
+# set chain address
+
+>chain : \ 7 B-CODR ! \ 7 & B-SODR !
+
+# fast>adc yields nothing
+# Send fast pulse height of selected chain to ADC
+# Also slow>adc
+
+fast>adc : \ 8 B-SODR !
+slow>adc : \ 8 B-CODR !
+
+# track yields nothing
+# Force the selected chain into track mode, regardless of triggering.
+
+track : \ 100 B-SODR !
+
+# reset yields nothing
+# Reset the selected chain
+
+reset : track \ 100 B-CODR !
+
+# a b t sel yields x
+# x will be a if t nonzero, b otherwise
+
+sel : 0= if swap drop
+
+# FIXME: bits labelled wrong in schematic and pio.tsv
+
+# m statb yields x
+# status bits masked by m
+statb : B-PDSR @ &
+
+,trig : statb " Ready" swap " Triggered" swap sel ,t nl
+,hold : statb " Track" swap " Hold" swap sel ,t nl
+,trighold : ,t ,trig "      " ,t ,hold
+
+%status : >chain \ 40 \ 80 " Fast " ,trighold \ 10 \ 20 " Slow " ,trighold
+
+# Go interactive
+
+nl nl " NICER MPU" t 1 doPrompt !
+

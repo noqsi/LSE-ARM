@@ -13,12 +13,6 @@ LDFLAGS = -msoft-float -nostartfiles -Lgcc -L$(LIBDIR)
 LIBS = -llse-arm -lm
 ELF_FILE = lse-mpu.elf
 
-# %.o:%.c
-#	arm-elf-gcc -c $(CFLAGS) $< -o $@
-
-# %.o:%.s
-#	arm-elf-as $(ASFLAGS) $< -o $@
-
 # This rule strips comments and blank lines from LSE source.
 
 %.txt:%.lse

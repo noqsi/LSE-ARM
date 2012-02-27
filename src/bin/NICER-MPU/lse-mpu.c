@@ -144,6 +144,9 @@ for clarity and to avoid conflict.
 	PIOA->sodr = 0x03300000;	/* turn off LED's */
 	PIOA->oer = 0x00020e10;		/* bitbang ADC and DAC */
 	PIOA->puer = bit(15);		/* set pullup on ADC data */
+	PIOB->oer = 0x00000f0f;		/* enable mpu control bits */
+	PIOB->asr = 0x15555000;		/* select timer inputs */
+	PIOB->pdr = 0x15555000;		/* assign pins to timer */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
