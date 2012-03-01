@@ -16,6 +16,8 @@
 #include "pit_driver.h"
 #include "mpu-tc.h"
 #include "lse-arm.h"
+#include "ad53bb.h"
+#include "pulsar.h"
 
 void lse_init( void );
 void lse_main( void );
@@ -31,7 +33,7 @@ const unsigned mck_hz = 18432000;
 Provide an "application". Placeholder.
 */
 
-char app_lse[] = "\" \nNICER MPU\n\" ,t 1 doPrompt !\n";
+// char app_lse[] = "\" \nNICER MPU\n\" ,t 1 doPrompt !\n";
 
 /*
 A little custom feature is to blink a light at 1 hz.
@@ -128,6 +130,8 @@ Enable reset via NRST pin.
 Turn on peripheral clocks, as needed.
 */
 
+        PMC->pcer = 0xffffffff;         /* for development, turn 'em all on */
+
 
 /*
 Configure IO pins here. Other peripheral configuration can happen in drivers,
@@ -137,9 +141,13 @@ for clarity and to avoid conflict.
 
 	PIOA->asr = 0xc0000000;	/* enable TXD0, RXD0 */
 	PIOA->pdr = 0xc0000000;	/* relinquish pins to USART0 */
-	PIOA->oer = 0x80000000;	/* enable output on TXD0 */
 	PIOA->oer = 0x03300000;	/* enable LED's */
 	PIOA->sodr = 0x03300000;	/* turn off LED's */
+	PIOA->oer = 0x00020e10;		/* bitbang ADC and DAC */
+	PIOA->puer = bit(15);		/* set pullup on ADC data */
+	PIOB->oer = 0x00000f0f;		/* enable mpu control bits */
+	PIOB->asr = 0x15555000;		/* select timer inputs */
+	PIOB->pdr = 0x15555000;		/* assign pins to timer */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
@@ -166,6 +174,13 @@ Now set up interrupts
 struct usart_parameters usart_list[USARTS];
 
 /*
+ * ADC and DAC structures
+ */
+
+struct pulsar pulsar_adc[1];
+struct ad53 ad53_dac[1];
+
+/*
 Finish I/O initialization and start up LSE.
 Note that device driver initializations generally have to be here, not in app_configure,
 because static variables are generally involved.
@@ -176,14 +191,28 @@ void app_main()
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = DBGU;	/* Use the debug unit for serial IO */
 	usart_list[0].baud = 115200;
-	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
+	usart_list[0].flags = 
+		UF_BREAK |		/* Interrupt on break from terminal */
+		UF_CR;			/* Allow CR as end of line */
 	usart_init( usart_list, USARTS );
+	pulsar_adc[0].pio = PIOA;
+	pulsar_adc[0].sck = bit(17);
+	pulsar_adc[0].cnv = bit(11);
+	pulsar_adc[0].sdo = bit(15);
+	pulsar_adc[0].bits = 18;
+	pulsar_adc[0].snx = 0xfffe0000;
+	ad53_dac[0].pio = PIOA;
+	ad53_dac[0].sclk = bit(10);
+	ad53_dac[0].sync = bit(4);
+	ad53_dac[0].din = bit(9);
 	init_pit( PIT, TICK_HZ );
 	on_tick = blink; 
 	lse_init();
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
 	tc_primitives();
+	pulsar_primitives();
+	ad53_primitives();
 	pps_start();	/* go live on raw clock and PPS */
 	lse_main();
 }

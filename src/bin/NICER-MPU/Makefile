@@ -1,5 +1,8 @@
 # $Id$
 
+AS = arm-elf-as
+CC = arm-elf-gcc
+
 CFLAGS  = -g -O -I../../include -mcpu=arm7tdmi -msoft-float -Wall
 
 LIBDIR = ../../lib
@@ -10,28 +13,25 @@ LDFLAGS = -msoft-float -nostartfiles -Lgcc -L$(LIBDIR)
 LIBS = -llse-arm -lm
 ELF_FILE = lse-mpu.elf
 
-%.o:%.c
-	arm-elf-gcc -c $(CFLAGS) $< -o $@
+# This rule strips comments and blank lines from LSE source.
 
-%.o:%.s
-	arm-elf-as $(ASFLAGS) $< -o $@
-
+%.txt:%.lse
+	sed -e '/^#/d' -e '/^$$/d' $< >$@
 	
-lse-mpu.elf:  $(LDFILE) lse-mpu.o mpu-tc.o
+
+lse-mpu.elf:  $(LDFILE) lse-mpu.o mpu-tc.o app_lse.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ \
-		$(BOOT) lse-mpu.o mpu-tc.o $(LIBS)
+		$(BOOT) lse-mpu.o mpu-tc.o app_lse.o $(LIBS)
 
-upload: lse-mpu.elf /tmp/LCK..openocd
-	echo "reset; halt; flash write_image lse-mpu.elf 0x100000; reset;" \
-	 | telnet localhost 4444 \
-	|| sleep 15
+app_lse.o : mpu.txt
 
-/tmp/LCK..openocd:
-	touch /tmp/LCK..openocd
-	(openocd 2>openocd.log; rm /tmp/LCK..openocd) & sleep 2
+upload: $(ELF_FILE)
+	openocd --file=openocd.cfg -c 'init;arm7_9 fast_memory_access enable' \
+		-c 'halt;flash write_image $(ELF_FILE) 0x100000;reset' \
+		-c 'arm7_9 fast_memory_access enable;shutdown'
 
 clean:
-	rm -f *.o *.elf openocd.log
+	rm -f *.o *.elf openocd.log mpu.txt
 
 # $Log$
 # Revision 1.1  2010-06-07 00:39:01  jpd

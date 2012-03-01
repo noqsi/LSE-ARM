@@ -8,10 +8,7 @@
 
 #include <stdint.h>
 
-#define PULSAR_TIMEOUT 0x10000000	/* return this on timeout */
-
-int32_t pulsar_read( struct pulsar *p );
-void pulsar_primitives( void );
+#define PULSAR_TIMEOUT 0x80000000	/* return this on timeout */
 
 /*
  * pio points to the PIO controller base address, either
@@ -32,3 +29,9 @@ struct pulsar {
 	unsigned bits;
 	uint32_t snx;	/* sign extension bits */
 };
+
+int32_t pulsar_read( struct pulsar *p );
+void pulsar_primitives( void );
+
+
+#endif /* ndef PULSAR_H */
