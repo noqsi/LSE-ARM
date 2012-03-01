@@ -144,6 +144,7 @@ for clarity and to avoid conflict.
 	PIOA->oer = 0x03300000;	/* enable LED's */
 	PIOA->sodr = 0x03300000;	/* turn off LED's */
 	PIOA->oer = 0x00020e10;		/* bitbang ADC and DAC */
+	PIOA->oer = 0x20000000;		/* Use TCLK6 to gate TC *
 	PIOA->puer = bit(15);		/* set pullup on ADC data */
 	PIOB->oer = 0x00000f0f;		/* enable mpu control bits */
 	PIOB->asr = 0x15555000;		/* select timer inputs */

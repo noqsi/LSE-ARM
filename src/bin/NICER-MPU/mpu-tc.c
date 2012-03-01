@@ -4,8 +4,11 @@
 #include "peripheral_id_7a3.h"
 #include "lse-arm.h"
 #include "aic.h"
+#include "pio.h"
 
 #define PPSTC (TC678->channel[2])
+#define GATE_BIT 0x20000000
+#define GATE_PORT (PIOA)
 
 static volatile uint32_t ticks;
 
@@ -80,9 +83,10 @@ void pps_start( void )
 {
 	ticks = 0;
 	pps32ms = 0xffffffff;		/* An unlikely value */
-	PPSTC.ccr = CLKEN | SWTRIG;	/* reset counter, enable clock */
-	PPSTC.cmr = LDRA_RISING;	/* should select burst mode here */
+	GATE_PORT->codr = GATE_BIT;	/* gate bit to zero */
+	PPSTC.cmr = LDRA_RISING | ANDXC0; /* gate clock with XC0 */
 	PPSTC.ier = COVFS | LDRAS;	/* interrupt on the events we need */
+	PPSTC.ccr = CLKEN | SWTRIG;	/* reset counter, enable clock */
 	AIC->svr[ TC8_ID ] = (uint32_t) pps_isr;
 	AIC->iecr = bit( TC8_ID );	/* turn on interrups from PPS */
 }
@@ -109,9 +113,15 @@ static void pps( void ) 		/* pps time for LSE */
 	*--sp = ls;
 }
 
+static void rt_on( void )
+{
+	GATE_PORT->sodr = GATE_BIT;
+}
+
 
 void tc_primitives( void )
 {
 	build_primitive( rt, "rt" );
 	build_primitive( pps, "pps" );
+	build_primitive( rt_on, "rt-on" );
 }
