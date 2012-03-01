@@ -3,7 +3,7 @@
 #include "memory_7a3.h"
 #include "peripheral_id_7a3.h"
 #include "lse-arm.h"
-#include "aic_driver.h"
+#include "aic.h"
 
 #define PPSTC (TC678->channel[2])
 
@@ -28,7 +28,21 @@ uint32_t rawtime( uint16_t * raw16ms )
 	return ( tick1 << 16 ) | jiffies;
 }
 
-
+uint32_t last_pps( uint16_t * pps16ms )
+{
+	uint16_t ls;
+	uint32_t ms1, ms2;
+	
+	do {			/* avoid race by demanding stable reading */
+		ms1 = pps32ms;
+		ls = pps16ls;
+		ms2 = pps32ms;
+	} while( ms1 != ms2 );
+	
+	if( pps16ms ) *pps16ms = ms1 >> 16;
+	
+	return ( ms1 << 16 ) | ls;
+}
 
 static void pps_isr( void )
 {
@@ -66,7 +80,7 @@ void pps_start( void )
 {
 	ticks = 0;
 	pps32ms = 0xffffffff;		/* An unlikely value */
-	PPSTC.ccr = CLKEN | SWTRG;	/* reset counter, enable clock */
+	PPSTC.ccr = CLKEN | SWTRIG;	/* reset counter, enable clock */
 	PPSTC.cmr = LDRA_RISING;	/* should select burst mode here */
 	PPSTC.ier = COVFS | LDRAS;	/* interrupt on the events we need */
 	AIC->svr[ TC8_ID ] = (uint32_t) pps_isr;
@@ -85,7 +99,19 @@ static void rt( void ) 			/* raw time for LSE */
 }
 
 
+static void pps( void ) 		/* pps time for LSE */
+{ 
+	uint16_t ms;
+	cell ls;
+	
+	ls = last_pps( &ms );
+	*--sp = ms;
+	*--sp = ls;
+}
+
+
 void tc_primitives( void )
 {
 	build_primitive( rt, "rt" );
+	build_primitive( pps, "pps" );
 }
