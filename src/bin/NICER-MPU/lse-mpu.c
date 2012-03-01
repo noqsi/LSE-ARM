@@ -190,7 +190,9 @@ void app_main()
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = DBGU;	/* Use the debug unit for serial IO */
 	usart_list[0].baud = 115200;
-	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
+	usart_list[0].flags = 
+		UF_BREAK |		/* Interrupt on break from terminal */
+		UF_CR;			/* Allow CR as end of line */
 	usart_init( usart_list, USARTS );
 	pulsar_adc[0].pio = PIOA;
 	pulsar_adc[0].sck = bit(17);

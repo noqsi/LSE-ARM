@@ -23,14 +23,9 @@ lse-mpu.elf:  $(LDFILE) lse-mpu.o app_lse.o
 
 app_lse.o : mpu.txt
 
-upload: lse-mpu.elf /tmp/LCK..openocd
-	echo "reset; halt; flash write_image lse-mpu.elf 0x100000; reset;" \
-	 | telnet localhost 4444 \
-	|| sleep 15
-
-/tmp/LCK..openocd:
-	touch /tmp/LCK..openocd
-	(openocd 2>openocd.log; rm /tmp/LCK..openocd) & sleep 2
+upload: $(ELF_FILE)
+	openocd --file=openocd.cfg -c \
+	  'init;halt;flash write_image $(ELF_FILE) 0x100000;reset;shutdown'
 
 clean:
 	rm -f *.o *.elf openocd.log mpu.txt
