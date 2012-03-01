@@ -14,6 +14,7 @@
 #include "usart_driver.h"
 #include "aic_driver.h"
 #include "pit_driver.h"
+#include "mpu-tc.h"
 #include "lse-arm.h"
 
 void lse_init( void );
@@ -182,6 +183,8 @@ void app_main()
 	lse_init();
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
+	tc_primitives();
+	pps_start();	/* go live on raw clock and PPS */
 	lse_main();
 }
 

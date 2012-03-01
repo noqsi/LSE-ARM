@@ -17,8 +17,9 @@ ELF_FILE = lse-mpu.elf
 	arm-elf-as $(ASFLAGS) $< -o $@
 
 	
-lse-mpu.elf:  $(LDFILE) lse-mpu.o
-	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-mpu.o $(LIBS)
+lse-mpu.elf:  $(LDFILE) lse-mpu.o mpu-tc.o
+	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ \
+		$(BOOT) lse-mpu.o mpu-tc.o $(LIBS)
 
 upload: lse-mpu.elf /tmp/LCK..openocd
 	echo "reset; halt; flash write_image lse-mpu.elf 0x100000; reset;" \
