@@ -24,8 +24,9 @@ lse-mpu.elf:  $(LDFILE) lse-mpu.o app_lse.o
 app_lse.o : mpu.txt
 
 upload: $(ELF_FILE)
-	openocd --file=openocd.cfg -c \
-	  'init;halt;flash write_image $(ELF_FILE) 0x100000;reset;shutdown'
+	openocd --file=openocd.cfg -c 'init;arm7_9 fast_memory_access enable' \
+		-c 'halt;flash write_image $(ELF_FILE) 0x100000;reset' \
+		-c 'arm7_9 fast_memory_access enable;shutdown'
 
 clean:
 	rm -f *.o *.elf openocd.log mpu.txt
