@@ -15,29 +15,13 @@ static volatile uint32_t ticks;	/* PPS timer overflows */
 static volatile uint16_t pps16ls;
 static volatile uint32_t pps32ms;
 
-struct {
-	cell ticks, jiffies, atime, fast_pulse, btime, slow_pulse, tag, done;
+static struct photons {
+	cell rawstamp, atime, fast_pulse, btime, slow_pulse, tag, done;
 } photons[2];
 
-int photon;
+int photon;	/* id the next possibly available photon buffer */
 
 // static cell ovcorr;
-
-(void) x_isr( int n, struct tc_channel *c )
-{
-	uint32_t status = c->sr;
-	
-	
-/* vector X-ray interrupts to common handler */
-
-(void) x0_isr( void ) { x_isr( 0, &TC012->channel[0] ); }
-(void) x1_isr( void ) { x_isr( 1, &TC012->channel[1] ); }
-(void) x2_isr( void ) { x_isr( 2, &TC012->channel[2] ); }
-(void) x3_isr( void ) { x_isr( 3, &TC345->channel[0] ); }
-(void) x4_isr( void ) { x_isr( 4, &TC345->channel[1] ); }
-(void) x5_isr( void ) { x_isr( 5, &TC345->channel[2] ); }
-(void) x6_isr( void ) { x_isr( 6, &TC678->channel[0] ); }
-(void) x7_isr( void ) { x_isr( 7, &TC678->channel[1] ); }
 
 uint32_t rawtime( uint16_t * raw16ms )
 {
@@ -54,6 +38,37 @@ uint32_t rawtime( uint16_t * raw16ms )
 	
 	return ( tick1 << 16 ) | jiffies;
 }
+
+(void) x_isr( int n, struct tc_channel *c )
+{
+	uint32_t status = c->sr;
+	struct photons *p = photons + photon;
+
+	PIOB->codr = 0xf;		/* clear chain select bits */
+	PIOB->sodr = n;			/* select fast chain n */
+		
+	if( !p->tag ) {	/* buffer available, record the event */					p->rawstamp = rawtime( 0 );	/* MPU timestamp (32) */
+		p->atime = c->ra;		/* trigger time (16) */
+		/* MUCH MISSING!!!! */	
+		p->tag = ((PIOB->pdsr&0xf0)>>4);
+		p->done = c->cv;		/* record finish time */
+	}
+	
+	PIOB->sodr = 0x100;	/* bang on reset */
+	PIOB->codr = 0x100;
+}
+	
+		
+/* vector X-ray interrupts to common handler */
+
+(void) x0_isr( void ) { x_isr( 0, &TC012->channel[0] ); }
+(void) x1_isr( void ) { x_isr( 1, &TC012->channel[1] ); }
+(void) x2_isr( void ) { x_isr( 2, &TC012->channel[2] ); }
+(void) x3_isr( void ) { x_isr( 3, &TC345->channel[0] ); }
+(void) x4_isr( void ) { x_isr( 4, &TC345->channel[1] ); }
+(void) x5_isr( void ) { x_isr( 5, &TC345->channel[2] ); }
+(void) x6_isr( void ) { x_isr( 6, &TC678->channel[0] ); }
+(void) x7_isr( void ) { x_isr( 7, &TC678->channel[1] ); }
 
 uint32_t last_pps( uint16_t * pps16ms )
 {
