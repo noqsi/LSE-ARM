@@ -10,10 +10,34 @@
 #define GATE_BIT 0x20000000
 #define GATE_PORT (PIOA)
 
-static volatile uint32_t ticks;
+static volatile uint32_t ticks;	/* PPS timer overflows */
 
-static uint16_t pps16ls;
-static uint32_t pps32ms;
+static volatile uint16_t pps16ls;
+static volatile uint32_t pps32ms;
+
+struct {
+	cell ticks, jiffies, atime, fast_pulse, btime, slow_pulse, tag, done;
+} photons[2];
+
+int photon;
+
+// static cell ovcorr;
+
+(void) x_isr( int n, struct tc_channel *c )
+{
+	uint32_t status = c->sr;
+	
+	
+/* vector X-ray interrupts to common handler */
+
+(void) x0_isr( void ) { x_isr( 0, &TC012->channel[0] ); }
+(void) x1_isr( void ) { x_isr( 1, &TC012->channel[1] ); }
+(void) x2_isr( void ) { x_isr( 2, &TC012->channel[2] ); }
+(void) x3_isr( void ) { x_isr( 3, &TC345->channel[0] ); }
+(void) x4_isr( void ) { x_isr( 4, &TC345->channel[1] ); }
+(void) x5_isr( void ) { x_isr( 5, &TC345->channel[2] ); }
+(void) x6_isr( void ) { x_isr( 6, &TC678->channel[0] ); }
+(void) x7_isr( void ) { x_isr( 7, &TC678->channel[1] ); }
 
 uint32_t rawtime( uint16_t * raw16ms )
 {
@@ -49,14 +73,26 @@ uint32_t last_pps( uint16_t * pps16ms )
 
 static void pps_isr( void )
 {
-	uint32_t status = PPSTC.sr;	/* grab only once per interrupt! */
-	
-	if( status & COVFS ) ticks += 1;	/* counter overflow */
+	for(;;) {				/* loop until status clean */
+		uint32_t status = PPSTC.sr;	/* grab only once per cycle! */
+		
+		if( !(status & 0xff)) return;
+			
+		if( status & COVFS ) ticks += 1;  /* counter overflow */
 		 
-	if( status & LDRAS ) {	/* Grab the PPS time from RA. */
+		if( status & LDRAS ) {	/* Grab the PPS time from RA. */
 	
-		pps16ls = PPSTC.ra;
-		pps32ms = ticks;
+		/* test code for checking with 80 kHz TCXO */
+		
+//			static int prescale = 1;
+//		
+//			if( --prescale ) return;  /* Haven't counted to zero */
+//			prescale = 80000;
+		
+		/* end of test code */
+	
+			pps16ls = PPSTC.ra;
+			pps32ms = ticks;
 		
 		/* 
 		 * Now correct for a potential race condition.
@@ -73,8 +109,11 @@ static void pps_isr( void )
 		 * this ISR is <30000 MCLK cycles.
 		 */
 		 
-		if( (status & COVFS) && (pps16ls > 0x8000) )
-			pps32ms -= 1;
+			if( (status & COVFS) && (pps16ls > 0x8000) ) {
+				pps32ms -= 1;
+//				ovcorr += 1;
+			}
+		}
 	}
 }
 		
@@ -84,9 +123,11 @@ void pps_start( void )
 	ticks = 0;
 	pps32ms = 0xffffffff;		/* An unlikely value */
 	GATE_PORT->codr = GATE_BIT;	/* gate bit to zero */
-	PPSTC.cmr = LDRA_RISING | ANDXC0; /* gate clock with XC0 */
-	PPSTC.ier = COVFS | LDRAS;	/* interrupt on the events we need */
-	PPSTC.ccr = CLKEN | SWTRIG;	/* reset counter, enable clock */
+	PPSTC.cmr = LDRA_RISING | LDRB_FALLING | ANDXC0; 
+				/* gate clock with XC0 */
+	PPSTC.ier = LDRAS | LDRBS | COVFS;
+				/* interrupt on the events we need */
+	PPSTC.ccr = CLKEN;	/* enable clock */
 	AIC->svr[ TC8_ID ] = (uint32_t) pps_isr;
 	AIC->iecr = bit( TC8_ID );	/* turn on interrups from PPS */
 }
@@ -115,6 +156,7 @@ static void pps( void ) 		/* pps time for LSE */
 
 static void rt_on( void )
 {
+	PPSTC.ccr = SWTRIG;		/* reset clock, allow register loads */
 	GATE_PORT->sodr = GATE_BIT;
 }
 
@@ -124,4 +166,5 @@ void tc_primitives( void )
 	build_primitive( rt, "rt" );
 	build_primitive( pps, "pps" );
 	build_primitive( rt_on, "rt-on" );
+//	build_named_constant( (cell) &ovcorr, "ovcorr");
 }

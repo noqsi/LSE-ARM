@@ -81,6 +81,15 @@ statb : B-PDSR @ &
 
 %status : >chain \ 40 \ 80 " Fast " ,trighold \ 10 \ 20 " Slow " ,trighold
 
+# monitor pps
+
+ppsls :variable
+
+chkpps : dup ppsls ! swap ,h sp ,h nl	# save lsb's, print pps time
+chkpps : dup ppsls @ = then drop drop	# nothing if unchanged
+
+mpps : pps chkpps repeat
+
 # Go interactive
 
 nl nl " NICER MPU" t 1 doPrompt !

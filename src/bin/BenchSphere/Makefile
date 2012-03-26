@@ -8,7 +8,7 @@ LDFILE = sam7a3-exec-flash.ld
 ASFLAGS = -mcpu=arm7tdmi -gstabs
 LDFLAGS = -nostartfiles -Lgcc -L$(LIBDIR) 
 LIBS = -llse-arm -lm
-ELF_FILE = lse-sam7a3.elf
+ELF_FILE = lse-benchsphere.elf
 
 %.o:%.c
 	arm-elf-gcc -c $(CFLAGS) $< -o $@
@@ -21,14 +21,10 @@ lse-benchsphere.elf:  $(LDFILE) lse-benchsphere.o pwm_background.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) \
 		lse-benchsphere.o pwm_background.o $(LIBS)
 
-upload: lse-sam7a3.elf /tmp/LCK..openocd
-	echo "reset; halt; flash write_image lse-benchsphere.elf 0x100000; reset;" \
-	 | telnet localhost 4444 \
-	|| sleep 15
-
-/tmp/LCK..openocd:
-	touch /tmp/LCK..openocd
-	(openocd 2>openocd.log; rm /tmp/LCK..openocd) & sleep 2
+upload: $(ELF_FILE)
+	openocd --file=openocd.cfg -c 'init;arm7_9 fast_memory_access enable' \
+		-c 'halt;flash write_image $(ELF_FILE) 0x100000;reset' \
+		-c 'arm7_9 fast_memory_access enable;shutdown'
 
 clean:
 	rm -f *.o *.elf openocd.log
