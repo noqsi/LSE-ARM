@@ -10,6 +10,7 @@
 #include "pmc.h"
 #include "rstc.h"
 #include "aic.h"
+#include "mc.h"
 #include "peripheral_id_7a3.h"
 #include "usart_driver.h"
 #include "aic_driver.h"
@@ -27,20 +28,19 @@ void copy_static( void );
 Let everyone know what the master clock frequency is.
 */
 
-const unsigned mck_hz = 18432000;
+#define MAINCLK 18432000
+#define PLLDIV	24
+#define PLLMUL	130
+#define PRESCALE 1
 
-/*
-Provide an "application". Placeholder.
-*/
-
-// char app_lse[] = "\" \nNICER MPU\n\" ,t 1 doPrompt !\n";
+const unsigned mck_hz = (MAINCLK/(PLLDIV*(1<<PRESCALE)))*PLLMUL;
 
 /*
 A little custom feature is to blink a light at 1 hz.
 Do this on the system tick.
 */
 
-#define TICK_HZ 4000
+#define TICK_HZ 1000
 
 static void blink( void )
 {
@@ -112,13 +112,45 @@ and I have no better info.
 	PMC->mor = MOSCEN | OSCOUNT(0x40);
 
 	while( !(PMC->sr & MOSCS));	/* wait for main osc stability */
-
+	
 /*
-Select the main clock, straight through. If you want something else
-you'll need to fiddle with PRES and/or the PLL.
+
+When we crank up the clock, we'll need wait states on flash.
+
 */
 
-	PMC->mckr = CSS_MAIN;
+	MC->fmr = FWAIT2;
+
+/*
+
+Program the PLL
+
+*/
+
+	PMC->pllr = DIV(PLLDIV) | PLLCOUNT(63) | MUL(PLLMUL);
+	
+	while( !(PMC->sr & LOCK));	/* wait for PLL stability */
+	
+/*
+
+Prescale if necessary.
+
+*/
+
+#if PRESCALE
+
+	PMC->mckr = PRES(PRESCALE);
+	
+	while( !(PMC->sr & MCKRDY));	/* wait for prescaler */
+	
+#endif
+	
+
+/*
+Select the PLL clock.
+*/
+
+	PMC->mckr |= CSS_PLL;
 
 /*
 Enable reset via NRST pin.
@@ -139,13 +171,12 @@ but it's useful to gather the physical pin configuration together in one place,
 for clarity and to avoid conflict.
 */
 
-	PIOA->asr = 0xc0000000;	/* enable TXD0, RXD0 */
-	PIOA->pdr = 0xc0000000;	/* relinquish pins to USART0 */
+	PIOA->asr = 0xc003f800;	/* enable TXD0, RXD0, SPI0 */
+	PIOA->pdr = 0xc003f800;	/* relinquish pins to USART0, SPI0 */
 	PIOA->oer = 0x03300000;	/* enable LED's */
 	PIOA->sodr = 0x03300000;	/* turn off LED's */
-	PIOA->oer = 0x00020e10;		/* bitbang ADC and DAC */
+	PIOA->oer = 0x00000610;		/* bitbang DAC */
 	PIOA->oer = 0x20000000;		/* Use TCLK6 to gate TC */
-	PIOA->puer = bit(15);		/* set pullup on ADC data */
 	PIOB->oer = 0x00000f0f;		/* enable mpu control bits */
 	PIOB->asr = 0x15555000;		/* select timer inputs */
 	PIOB->pdr = 0x15555000;		/* assign pins to timer */
