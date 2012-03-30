@@ -1,0 +1,38 @@
+File{
+
+# Play with SPI0
+
+\ fffe0000 SPI :constant
+\ 0 SPI + CR :constant
+\ 4 SPI + MR :constant
+\ 8 SPI + RDR :constant
+\ c SPI + TDR :constant
+\ 10 SPI + SR :constant
+\ 14 SPI + IER :constant
+\ 18 SPI + IDR :constant
+\ 1c SPI + IMR :constant
+\ 30 SPI + CSR0 :constant
+\ 34 SPI + CSR1 :constant
+\ 38 SPI + CSR2 :constant
+\ 3C SPI + CSR3 :constant
+
+# need to poke PIO too
+
+\ fffff400 PIOA :constant
+\ 0 PIOA + PER :constant
+\ 4 PIOA + PDR :constant
+\ 8 PIOA + PSR :constant
+\ 10 PIOA + OER :constant
+\ 14 PIOA + ODR :constant
+\ 18 PIOA + OSR :constant
+\ 30 PIOA + SODR :constant
+\ 34 PIOA + CODR :constant
+\ 3c PIOA + PDSR :constant
+\ 60 PIOA + PUDR :constant
+\ 64 PIOA + PUER :constant
+\ 68 PIOA + PUSR :constant
+\ 70 PIOA + ASR :constant
+\ 74 PIOA + BSR :constant
+\ 78 PIOA + ABSR :constant
+
+}File

@@ -19,9 +19,11 @@ ELF_FILE = lse-mpu.elf
 	sed -e '/^#/d' -e '/^$$/d' $< >$@
 	
 
-lse-mpu.elf:  $(LDFILE) lse-mpu.o mpu-tc.o app_lse.o
+lse-mpu.elf:  $(LDFILE) lse-mpu.o mpu-tc.o app_lse.o pulsar_spi.o \
+		pulsar_spi_primitives.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ \
-		$(BOOT) lse-mpu.o mpu-tc.o app_lse.o $(LIBS)
+		$(BOOT) lse-mpu.o mpu-tc.o app_lse.o pulsar_spi.o \
+		pulsar_spi_primitives.o $(LIBS)
 
 app_lse.o : mpu.txt
 

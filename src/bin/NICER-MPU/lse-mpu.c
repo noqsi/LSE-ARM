@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Start up LSE on the ARM.
  */
@@ -18,7 +16,7 @@
 #include "mpu-tc.h"
 #include "lse-arm.h"
 #include "ad53bb.h"
-#include "pulsar.h"
+#include "pulsar_spi.h"
 
 void lse_init( void );
 void lse_main( void );
@@ -172,10 +170,12 @@ for clarity and to avoid conflict.
 */
 
 	PIOA->asr = 0xc003f800;	/* enable TXD0, RXD0, SPI0 */
-	PIOA->pdr = 0xc003f800;	/* relinquish pins to USART0, SPI0 */
+	PIOA->pdr = 0xc0038000;	/* relinquish pins to USART0, SPI0 */
 	PIOA->oer = 0x03300000;	/* enable LED's */
 	PIOA->sodr = 0x03300000;	/* turn off LED's */
 	PIOA->oer = 0x00000610;		/* bitbang DAC */
+	PIOA->oer = 0x00007800;		/* bitbang SPI0 select bits */
+	PIOA->sodr = 0x00007800;	/* deselect */
 	PIOA->oer = 0x20000000;		/* Use TCLK6 to gate TC */
 	PIOB->oer = 0x00000f0f;		/* enable mpu control bits */
 	PIOB->asr = 0x15555000;		/* select timer inputs */
@@ -207,9 +207,9 @@ struct usart_parameters usart_list[USARTS];
 
 /*
  * ADC and DAC structures
+ 
  */
-
-struct pulsar pulsar_adc[1];
+struct spi *pulsar_spi = SPI0;
 struct ad53 ad53_dac[1];
 
 /*
@@ -227,12 +227,6 @@ void app_main()
 		UF_BREAK |		/* Interrupt on break from terminal */
 		UF_CR;			/* Allow CR as end of line */
 	usart_init( usart_list, USARTS );
-	pulsar_adc[0].pio = PIOA;
-	pulsar_adc[0].sck = bit(17);
-	pulsar_adc[0].cnv = bit(11);
-	pulsar_adc[0].sdo = bit(15);
-	pulsar_adc[0].bits = 18;
-	pulsar_adc[0].snx = 0xfffe0000;
 	ad53_dac[0].pio = PIOA;
 	ad53_dac[0].sclk = bit(10);
 	ad53_dac[0].sync = bit(4);
@@ -243,41 +237,11 @@ void app_main()
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
 	tc_primitives();
-	pulsar_primitives();
+	pulsar_spi_primitives();
+	pulsar_spi_init( SPI0 );
 	ad53_primitives();
 	pps_start();	/* go live on raw clock and PPS */
 	lse_main();
 }
 
-/*
- * $Log$
- * Revision 1.4  2010-07-13 18:38:05  jpd
- * First draft of low level SPI driver.
- *
- * Revision 1.3  2010-06-10 17:53:06  jpd
- * Completed interrupt infrastructure.
- * Periodic timer interrupt working on SAM7A3.
- * Commented out some unnecessary definitions.
- * Added ability to display free memory.
- *
- * Revision 1.2  2010-06-08 18:56:55  jpd
- * Faults and user interrupts now work on SAM7A3
- *
- * Revision 1.1  2010-06-07 00:39:01  jpd
- * Massive reorganization of source tree.
- *
- * Revision 1.1  2010-06-05 17:41:52  jpd
- * More reorganization
- *
- * Revision 1.3  2009-06-01 16:54:19  jpd
- * Installation instructions.
- * Fix line editing, allow external reset.
- *
- * Revision 1.2  2009-03-26 01:26:22  jpd
- * Better factoring.
- *
- * Revision 1.1  2009-03-14 22:58:06  jpd
- * Can now run LSE in an ARM SAM7X!
- *
- */
 
