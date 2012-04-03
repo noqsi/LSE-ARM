@@ -41,21 +41,58 @@ uint32_t rawtime( uint16_t * raw16ms )
 
 static void x_isr( int n, struct tc_channel *c )
 {
-	uint32_t status = c->sr;
+	uint32_t status;
 	struct photons *p = photons + photon;
 
-	PIOB->codr = 0xf;		/* clear chain select bits */
-	PIOB->sodr = n;			/* select fast chain n */
+	PIOB->codr = CHAIN_ADDR | SELECT_FAST;	/* clear chain select bits */
+	PIOB->sodr = n | SELECT_FAST;		/* select fast chain n */
 		
 	if( !p->tag ) {	/* buffer available, record the event */					p->rawstamp = rawtime( 0 );	/* MPU timestamp (32) */
 		p->atime = c->ra;		/* trigger time (16) */
-		/* MUCH MISSING!!!! */	
-		p->tag = ((PIOB->pdsr&0xf0)>>4);
+		
+		if( !( PIOB->pdsr & FAST_TRIGn )) {
+			/* Got a fast trigger */
+			for( i = 0; PIOB->pdsr & FAST_HOLDn ) ; i+= 1 ) {
+				if( i >= POLLMAX ) {
+					p->tag |= NO_FAST_HOLD;
+					goto do_slow;
+				}
+			}
+			p->fast_pulse = pulsar_spi_read( SPI0 );
+		}
+do_slow:
+		PIOB->codr = SELECT_FAST;	/* switch to slow chain */
+		
+		for( i = 0; PIOB->pdsr & SLOW_TRIGn ) ; i+= 1 ) {
+			if( i >= POLLMAX ) {
+				p->tag |= NO_SLOW_TRIG;
+				goto finish;
+			}
+		}
+		
+		for( i = 0; PIOB->pdsr & SLOW_HOLDn ) ; i+= 1 ) {
+			if( i >= POLLMAX ) {
+				p->tag |= NO_SLOW_HOLD;
+				goto finish;
+			}
+		}
+		p->slow_pulse = pulsar_spi_read( SPI0 );
+
+finish:		
+		status = c->sr;
+		if( !(status & 	LDRBS) ) {
+			p->tag |= NO_RB;
+		}
+		
+		p->btime = c->rb;	
+		
+		p->tag |= B_BBIN & ~PIOB->pdsr;
 		p->done = c->cv;		/* record finish time */
 	}
 	
 	PIOB->sodr = 0x100;	/* bang on reset */
-	PIOB->codr = 0x100;
+	status = c->sr;		/* clear any remaining status */
+	PIOB->codr = 0x100;	/* rearm */
 }
 	
 		
