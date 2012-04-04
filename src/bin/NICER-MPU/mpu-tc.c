@@ -5,10 +5,23 @@
 #include "lse-arm.h"
 #include "aic.h"
 #include "pio.h"
+#include "mpu_pio.h"
+#include "pulsar_spi.h"
 
 #define PPSTC (TC678->channel[2])
+#define X0TC (TC012->channel[0])
+#define X1TC (TC012->channel[1])
 #define GATE_BIT 0x20000000
 #define GATE_PORT (PIOA)
+
+#define POLLMAX 100	/* maximum # of checks for shaper events */
+
+/* tag bits */
+
+#define NO_FAST_HOLD (1<<31)
+#define NO_SLOW_TRIG (1<<30)
+#define NO_SLOW_HOLD (1<<29)
+#define NO_RB (1<<28)
 
 static volatile uint32_t ticks;	/* PPS timer overflows */
 
@@ -42,6 +55,7 @@ uint32_t rawtime( uint16_t * raw16ms )
 static void x_isr( int n, struct tc_channel *c )
 {
 	uint32_t status;
+	int i;
 	struct photons *p = photons + photon;
 
 	PIOB->codr = CHAIN_ADDR | SELECT_FAST;	/* clear chain select bits */
@@ -52,7 +66,7 @@ static void x_isr( int n, struct tc_channel *c )
 		
 		if( !( PIOB->pdsr & FAST_TRIGn )) {
 			/* Got a fast trigger */
-			for( i = 0; PIOB->pdsr & FAST_HOLDn ) ; i+= 1 ) {
+			for( i = 0; PIOB->pdsr & FAST_HOLDn ; i+= 1 ) {
 				if( i >= POLLMAX ) {
 					p->tag |= NO_FAST_HOLD;
 					goto do_slow;
@@ -63,14 +77,14 @@ static void x_isr( int n, struct tc_channel *c )
 do_slow:
 		PIOB->codr = SELECT_FAST;	/* switch to slow chain */
 		
-		for( i = 0; PIOB->pdsr & SLOW_TRIGn ) ; i+= 1 ) {
+		for( i = 0; PIOB->pdsr & SLOW_TRIGn  ; i+= 1 ) {
 			if( i >= POLLMAX ) {
 				p->tag |= NO_SLOW_TRIG;
 				goto finish;
 			}
 		}
 		
-		for( i = 0; PIOB->pdsr & SLOW_HOLDn ) ; i+= 1 ) {
+		for( i = 0; PIOB->pdsr & SLOW_HOLDn  ; i+= 1 ) {
 			if( i >= POLLMAX ) {
 				p->tag |= NO_SLOW_HOLD;
 				goto finish;
@@ -170,7 +184,7 @@ static void pps_isr( void )
 }
 		
 
-void pps_start( void )
+void tc_start( void )
 {
 	ticks = 0;
 	pps32ms = 0xffffffff;		/* An unlikely value */
@@ -180,9 +194,22 @@ void pps_start( void )
 	PPSTC.ier = LDRAS | LDRBS | COVFS;
 				/* interrupt on the events we need */
 	PPSTC.ccr = CLKEN;	/* enable clock */
+	
+	X0TC.cmr = LDRA_FALLING | LDRB_RISING | ANDXC0;
+	X0TC.ier = LDRAS;
+	X0TC.ccr = CLKEN;
+	
+	X1TC.cmr = LDRA_FALLING | LDRB_RISING | ANDXC0;
+	X1TC.ier = LDRAS;
+	X1TC.ccr = CLKEN;
+	
 	AIC->svr[ TC8_ID ] = (uint32_t) pps_isr;
-	AIC->iecr = bit( TC8_ID );	/* turn on interrups from PPS */
-}
+	AIC->iecr = bit( TC8_ID );	/* turn on interrupts from PPS */
+	AIC->svr[ TC0_ID ] = (uint32_t) x0_isr;
+	AIC->iecr = bit( TC0_ID );	
+	AIC->svr[ TC1_ID ] = (uint32_t) x1_isr;
+	AIC->iecr = bit( TC1_ID );	
+}	
 
 
 static void rt( void ) 			/* raw time for LSE */
@@ -206,9 +233,11 @@ static void pps( void ) 		/* pps time for LSE */
 	*--sp = ls;
 }
 
-static void rt_on( void )
+static void tc_on( void )
 {
 	PPSTC.ccr = SWTRIG;		/* reset clock, allow register loads */
+	X0TC.ccr = SWTRIG;
+	X1TC.ccr = SWTRIG;
 	GATE_PORT->sodr = GATE_BIT;
 }
 
@@ -217,6 +246,6 @@ void tc_primitives( void )
 {
 	build_primitive( rt, "rt" );
 	build_primitive( pps, "pps" );
-	build_primitive( rt_on, "rt-on" );
+	build_primitive( tc_on, "tc-on" );
 //	build_named_constant( (cell) &ovcorr, "ovcorr");
 }

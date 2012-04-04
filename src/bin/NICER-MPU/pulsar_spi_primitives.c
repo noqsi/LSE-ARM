@@ -12,6 +12,6 @@ static void read_pulsar( void )
 
 void pulsar_spi_primitives( void )
 {
-	build_primitive( read_pulsar, "@pulsar" );
+	build_primitive( read_pulsar, "<pulsar" );
 }
 
