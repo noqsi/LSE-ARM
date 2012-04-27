@@ -240,7 +240,7 @@ void app_main()
 	pulsar_spi_primitives();
 	pulsar_spi_init( SPI0 );
 	ad53_primitives();
-	pps_start();	/* go live on raw clock and PPS */
+	tc_start();	/* go live on raw clock and PPS */
 	lse_main();
 }
 

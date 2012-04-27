@@ -28,11 +28,17 @@ static volatile uint32_t ticks;	/* PPS timer overflows */
 static volatile uint16_t pps16ls;
 static volatile uint32_t pps32ms;
 
-static struct photons {
-	cell rawstamp, atime, fast_pulse, btime, slow_pulse, tag, done;
+
+/* 
+In the photon structure, put the tag first for the convenience
+of the LSE code reading it.
+*/
+
+static struct photon {
+	cell tag, rawstamp, atime, fast_pulse, btime, slow_pulse, done;
 } photons[2];
 
-int photon;	/* id the next possibly available photon buffer */
+static volatile int photon; /* id the next possibly available photon buffer */
 
 // static cell ovcorr;
 
@@ -56,7 +62,7 @@ static void x_isr( int n, struct tc_channel *c )
 {
 	uint32_t status;
 	int i;
-	struct photons *p = photons + photon;
+	struct photon *p = photons + photon;
 
 	PIOB->codr = CHAIN_ADDR | SELECT_FAST;	/* clear chain select bits */
 	PIOB->sodr = n | SELECT_FAST;		/* select fast chain n */
@@ -102,6 +108,7 @@ finish:
 		
 		p->tag |= B_BBIN & ~PIOB->pdsr;
 		p->done = c->cv;		/* record finish time */
+		photon = !photon;		/* toggle active buffer */
 	}
 	
 	PIOB->sodr = 0x100;	/* bang on reset */
@@ -241,11 +248,33 @@ static void tc_on( void )
 	GATE_PORT->sodr = GATE_BIT;
 }
 
+static void photonq( void )		/* test for a photon in either buffer */
+{
+	flag = ((photons[photon].tag || photons[!photon].tag) != 0);
+}
+
+/* 
+Push a pointer to the next photon on the LSE stack.
+Assumes the caller has checked via photonq that there is one.
+If the "current" buffer has nonzero tag, it probably contains the older
+event, so we try it first.
+*/
+
+static void photonp( void )
+{
+	int p = photon;	/* grab once to avoid race */
+	
+	if( photons[p].tag ) *--sp = (cell) (photons + p);
+	else *--sp = (cell) (photons + !p);
+}
+
 
 void tc_primitives( void )
 {
 	build_primitive( rt, "rt" );
 	build_primitive( pps, "pps" );
 	build_primitive( tc_on, "tc-on" );
+	build_primitive( photonq, "photon?" );
+	build_primitive( photonp, "photon" );
 //	build_named_constant( (cell) &ovcorr, "ovcorr");
 }

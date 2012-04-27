@@ -85,10 +85,19 @@ statb : B-PDSR @ &
 
 ppsls :variable
 
-chkpps : dup ppsls ! swap ,h sp ,h nl	# save lsb's, print pps time
-chkpps : dup ppsls @ = then drop drop	# nothing if unchanged
+pps? : pps ppsls @ = no? drop
+ppps : " pps: " ,t pps dup ppsls ! swap ,h sp ,h nl
 
-mpps : pps chkpps repeat
+mpps : pps? if ppps repeat
+
+# event yields nothing
+# print event data
+
+(ef) : sp photon count [] @ ,
+event : " tag: " ,t photon @ ,h nl 6 (ef) iterate nl 0 photon !
+
+poll : photon? then event
+poll : pps? then ppps
 
 # Go interactive
 

@@ -1,0 +1,22 @@
+File{
+
+#  poke PIOB
+
+\ fffff600 PIOB :constant
+\ 0 PIOB + PER :constant
+\ 4 PIOB + PDR :constant
+\ 8 PIOB + PSR :constant
+\ 10 PIOB + OER :constant
+\ 14 PIOB + ODR :constant
+\ 18 PIOB + OSR :constant
+\ 30 PIOB + SODR :constant
+\ 34 PIOB + CODR :constant
+\ 3c PIOB + PDSR :constant
+\ 60 PIOB + PUDR :constant
+\ 64 PIOB + PUER :constant
+\ 68 PIOB + PUSR :constant
+\ 70 PIOB + ASR :constant
+\ 74 PIOB + BSR :constant
+\ 78 PIOB + ABSR :constant
+
+}File
