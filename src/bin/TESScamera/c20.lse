@@ -1,0 +1,442 @@
+\# : skip>nl
+' \# immediate
+
+# Basic bit manipulation
+
+# n lshift yields 2*n
+lshift : 2 *
+
+# n m << yields (2^m)*n
+<< : lshift iterate
+
+# m bit yields (2^n)
+bit : 1 swap <<
+
+# set up the DACs
+# start with the addresses in the ARM
+\ f0000000         PBASE :constant      # base of peripheral memory
+PBASE \ ffff000 +  SYSC :constant       # system controller
+SYSC \ 400 +       PIOA :constant       # PIO port A base
+PIOA \ 30 +        PIOA_SODR :constant  # Set output data
+PIOA \ 34 +        PIOA_CODR :constant  # Clear output data
+PIOA \ 3c +        PIOA_PDSR :constant  # Pin data status
+SYSC \ 600 +       PIOB :constant       # PIO port B base
+PIOB \ 30 +        PIOB_SODR :constant  # Set output data
+PIOB \ 34 +        PIOB_CODR :constant  # Clear output data
+PIOB \ 3c +        PIOB_PDSR :constant  # Pin data status
+
+12 bit PA_DS0 :constant  # DAC select 0
+13 bit PA_DS8 :constant  # DAC select 8
+17 bit PA_DD  :constant  # DAC data
+18 bit PA_DCK :constant  # DAC clock
+
+DCK_hi : PA_DCK PIOA_SODR !
+DCK_lo : PA_DCK PIOA_CODR !
+DD_hi : PA_DD PIOA_SODR !
+DD_lo : PA_DD PIOA_CODR !
+16 bit msb :constant
+DD_bit : ifelse DD_lo DD_hi
+
+dac_init0 : PA_DS0 PIOA_SODR ! DCK_hi
+dac_init8 : PA_DS8 PIOA_SODR ! DCK_hi
+
+# DAC commands
+dac_sync0 : PA_DS0 PIOA_CODR !
+dac_sync8 : PA_DS8 PIOA_CODR !
+msb_step : msb & 0= DD_bit DCK_lo DCK_hi
+data_step : lshift dup msb_step
+data_bits : 16 data_step iterate DD_lo drop
+
+# DAC addresses
+\ 0     DACPP :constant
+\ 1000  DACPN :constant
+\ 2000  DACSP :constant
+\ 3000  DACSN :constant
+\ 4000  DACRP :constant
+\ 5000  DACRN :constant
+\ 0     DRD :constant
+\ 1000  DOG :constant
+\ 2000  DOD :constant
+dacpn : dac_sync0 16 * DACPN + data_bits dac_init0
+dacpp : dac_sync0 16 * DACPP + data_bits dac_init0
+dacsp : dac_sync0 16 * DACSP + data_bits dac_init0
+dacsn : dac_sync0 16 * DACSN + data_bits dac_init0
+dacrp : dac_sync0 16 * DACRP + data_bits dac_init0
+dacrn : dac_sync0 16 * DACRN + data_bits dac_init0
+dacrd : dac_sync8 16 * DRD + data_bits dac_init8
+dacog : dac_sync8 16 * DOG + data_bits dac_init8
+dacod : dac_sync8 16 * DOD + data_bits dac_init8
+
+# Load DAC values
+
+dac_init0
+250 dacpp
+205 dacpn
+135 dacsp
+35  dacsn
+250 dacrp
+139 dacrn
+dac_init8
+240 dacrd
+160 dacog
+250 dacod
+
+# now set up the sequencer
+# define the bits
+0 bit P1-IA :constant
+1 bit P2-IA :constant
+2 bit P3-IA :constant
+3 bit P1-FS :constant
+4 bit P2-FS :constant
+5 bit P3-FS :constant
+6 bit P1-OR :constant
+7 bit P2-OR :constant
+8 bit P3-OR :constant
+9 bit RG :constant
+10 bit Int :constant
+11 bit Clamp :constant
+12 bit Hold :constant
+15 bit CNV :constant
+16 bit FVAL :constant
+17 bit LVAL :constant
+
+variables: clkdiv blocklen blockaddr istate state
+
+# block addresses in the FPGA
+# 16 addresses form one block
+# adjust if slowing down beyond the current 24 steps per block
+0  pix          :constant
+3  pixA         :constant
+6  pixB         :constant
+9  fr2serial    :constant
+18 image2fr     :constant
+27 interline    :constant
+
+# set the CCD parameters here
+2048 rows       :constant
+1024 columns     :constant
+10 underclocks  :constant
+10 overclocks   :constant
+
+# set the number of serials and parallels
+# for example 4+16+256=276 serials or one quad
+# 16+516=532 vertical rows
+overclocks underclocks columns + + 6 /  serials :constant
+overclocks rows +                  parallels :constant
+
+# make the initial state the current state
+initstate : istate @ state !
+
+# make the current state the initial state
+setinitstate : state @ istate !
+
+# name :block{ yields nothing
+# name contains the block address in the sequencer, and 
+# subsequent lines add the contents of the sequencer
+:block{ : 16 * 4 swap writeSeq setinitstate
+# }block yields nothing
+# clean up the block write
+}block : initstate
+
+# n high yields nothing
+# n low yields nothing
+# set/clear state bits specified by the bitmask n
+high : state @ | state !
+low : ~ state @ & state !
+
+# write a new state vector into the current sequencer address
+# to slow the system down, one can do multiples of step
+# for example, state dup @ putseq @ putseq
+step : 5 state @ writeSeq
+steps : step iterate
+mstep : 6 steps
+pstep : 24 steps
+
+# quick diagnostic commands for the sequencer
+# look at the last state
+chkst : state @ ,h
+
+# look at the sequence address or memory content or both
+# note that seqmemr and seqstep advances the address
+seqaddr : 4 readSeq ,h
+seqmemr : 5 readSeq ,h
+seqstep : seqaddr sp seqmemr nl
+# go back to address 0
+goaddr0 : 4 0 writeSeq
+
+# initialize 0 state
+0 istate !
+initstate
+
+# initialize the SLR in the FPGA to 24 steps per block
+# subtract 1 since addresses start at 0
+1 23 writeSeq
+
+# initialize two channels 
+2 \ 30 writeSeq
+
+# define usual clock state between pixels
+  CNV low
+  Clamp low
+  LVAL high
+  FVAL high
+  P1-IA   high
+  P2-IA   high
+  P3-IA   low
+  P1-OR   low
+  P2-OR   high
+  P3-OR   low
+  P1-FS   high 
+  P2-FS   high
+  P3-FS   low
+  Int     low
+  Hold    low
+  RG      low
+setinitstate
+
+# load pix block clocks one pixel into the output
+
+pix :block{
+  LVAL high FVAL high CNV high step  \# A0 start new conversion
+  RG high step                       \# 1 
+  Clamp high step                    \# 2 
+  P3-OR high step                    \# 3 
+  step                               \# 4 
+  step                               \# 5
+  step                               \# 6
+  RG low P2-OR low step              \# 7 
+  CNV low step                       \# 8 
+  Clamp low Hold high step           \# 9 MSB shows up at ADC output
+  step                               \# 10
+  P1-OR high step                    \# 11
+  step                               \# 12
+  step                               \# 13
+  step                               \# 14 Start integration
+  P3-OR low step                     \# 15
+  Int high step                      \# 16
+  step                               \# 17
+  step                               \# 18
+  P2-OR high step                    \# 19 Hold
+  step                               \# 20
+  step                               \# 21
+  Hold low Int low step              \# 22
+  P1-OR low step                     \# 23
+  CNV high step                      \# 24 start new conversion
+  RG high step                       \# 25 
+  Clamp high step                    \# 26 
+  P3-OR high step                    \# 27 
+  step               	             \# 28
+  step                               \# 29
+  step                               \# 30
+  RG low P2-OR low step              \# 31
+  CNV low step                       \# 32
+  Clamp low Hold high step           \# 33 MSB shows up at ADC output
+  step                               \# 34
+  P1-OR high step                    \# 35
+  step                               \# 36
+  step                               \# 37
+  step                               \# 38 Start integration
+  P3-OR low step                     \# 39
+  Int high step                      \# 40
+  step                               \# 41
+  step                               \# 42
+  P2-OR high step                    \# 43 Hold
+  step                               \# 44
+  step                               \# 45
+  Hold low Int low step              \# 46
+  P1-OR low step                     \# 47
+ }block
+
+pixA :block{
+  LVAL high FVAL high CNV high step  \# A0 start new conversion
+  RG high step                       \# 1 
+  Clamp high step                    \# 2 
+  P3-OR high step                    \# 3 
+  step                               \# 4 
+  step                               \# 5
+  step                               \# 6
+  RG low P2-OR low step              \# 7 
+  CNV low step                       \# 8 
+  Clamp low Hold high step           \# 9 MSB shows up at ADC output
+  step                               \# 10
+  P1-OR high step                    \# 11
+  step                               \# 12
+  step                               \# 13
+  step                               \# 14 Start integration
+  P3-OR low step                     \# 15
+  Int high step                      \# 16
+  step                               \# 17
+  step                               \# 18
+  P2-OR high step                    \# 19 Hold
+  step                               \# 20
+  step                               \# 21
+  Hold low Int low step              \# 22
+  P1-OR low step                     \# 23
+  CNV high step                      \# 24 start new conversion
+  RG high step                       \# 25 
+  Clamp high step                    \# 26 
+  P3-OR high step                    \# 27 
+  step               	             \# 28
+  step                               \# 29
+  step                               \# 30
+  RG low P2-OR low step              \# 31
+  CNV low step                       \# 32
+  Clamp low Hold high step           \# 33 MSB shows up at ADC output
+  step                               \# 34
+  P1-OR high step                    \# 35
+  step                               \# 36
+  step                               \# 37
+  step                               \# 38 Start integration
+  P3-OR low step                     \# 39
+  Int high step                      \# 40
+  step                               \# 41
+  step                               \# 42
+  P2-OR high step                    \# 43 Hold
+  step                               \# 44
+  step                               \# 45
+  Hold low Int low step              \# 46
+  P1-OR low step                     \# 47
+ }block
+
+pixB :block{
+  LVAL high FVAL high CNV high step  \# A0 start new conversion
+  RG high step                       \# 1 
+  Clamp high step                    \# 2 
+  P3-OR high step                    \# 3 
+  step                               \# 4 
+  step                               \# 5
+  step                               \# 6
+  RG low P2-OR low step              \# 7 
+  CNV low step                       \# 8 
+  Clamp low Hold high step           \# 9 MSB shows up at ADC output
+  step                               \# 10
+  P1-OR high step                    \# 11
+  step                               \# 12
+  step                               \# 13
+  step                               \# 14 Start integration
+  P3-OR low step                     \# 15
+  Int high step                      \# 16
+  step                               \# 17
+  step                               \# 18
+  P2-OR high step                    \# 19 Hold
+  step                               \# 20
+  step                               \# 21
+  Hold low Int low step              \# 22
+  P1-OR low step                     \# 23
+  CNV high step                      \# 24 start new conversion
+  RG high step                       \# 25 
+  Clamp high step                    \# 26 
+  P3-OR high step                    \# 27 
+  step               	             \# 28
+  step                               \# 29
+  step                               \# 30
+  RG low P2-OR low step              \# 31
+  CNV low step                       \# 32
+  Clamp low Hold high step           \# 33 MSB shows up at ADC output
+  step                               \# 34
+  P1-OR high step                    \# 35
+  step                               \# 36
+  step                               \# 37
+  step                               \# 38 Start integration
+  P3-OR low step                     \# 39
+  Int high step                      \# 40
+  step                               \# 41
+  step                               \# 42
+  P2-OR high step                    \# 43 Hold
+  step                               \# 44
+  step                               \# 45
+  Hold low Int low step              \# 46
+  P1-OR low step                     \# 47
+ }block
+
+# transfer one row into the serial register
+
+fr2serial :block{ 
+  LVAL low FVAL high P1-FS low CNV high mstep   \# 0
+  mstep                               \# 1
+  CNV low mstep                       \# 2
+  P1-OR high mstep                    \# 3
+  CNV high P3-FS high mstep           \# 4
+  mstep                               \# 5
+  CNV low mstep                       \# 6
+  mstep                               \# 7
+  Clamp high P2-FS low CNV high mstep \# 8
+  mstep                               \# 9
+  CNV low mstep                       \# 10
+  Clamp low Hold high mstep           \# 11
+  CNV high P1-FS high mstep           \# 12
+  mstep                               \# 13
+  CNV low mstep                       \# 14
+  Int low mstep                       \# 15
+  CNV high P3-FS low mstep            \# 16
+  P1-OR low mstep                     \# 17
+  CNV low mstep                       \# 18
+  Hold low Int high mstep             \# 19
+  CNV high P2-FS high mstep           \# 20
+  mstep                               \# 21
+  CNV low mstep                       \# 22
+  mstep                               \# 23
+ }block
+
+# fast transfer from image section to frame store
+
+interline :block{
+  LVAL low FVAL high step  \# 0
+  step	                            \# 1
+  step                              \# 2
+  step                              \# 3
+  step                              \# 4
+  step                              \# 5
+  step                              \# 6
+  step                              \# 7
+  CNV low Clamp high step           \# 8
+  step                              \# 9
+  step                              \# 10
+  Clamp low Hold high step          \# 11
+  step                              \# 12
+  step                              \# 13
+  step                              \# 14
+  Int low step                      \# 15
+  step                              \# 16
+  step                              \# 17
+  step                              \# 18
+  Hold low Int high step            \# 19
+  step                              \# 20
+  step                              \# 21
+  step                              \# 22
+  step                              \# 23
+ }block
+
+image2fr :block{
+  FVAL low LVAL low CNV high P1-FS low P1-IA low P1-OR low RG high pstep \# 0
+  P3-FS high P3-IA high P3-OR high pstep          \# 24
+  CNV low P2-FS low P2-IA low P2-OR low pstep     \# 48
+  P1-FS high P1-IA high P1-OR high pstep          \# 72
+  P3-FS low P3-IA low P3-OR low pstep             \# 96
+  P2-FS high P2-IA high P2-OR high pstep          \# 120
+ }block
+
+# 
+2 seq_blk :array
+1 seq_blk 1 [] !
+ld_go : seq_blk 0 [] ! seq_blk goSeq
+delay : 15000 usec iterate
+1 143 writeSeq 
+8 0 writeSeq
+
+row_delay : 117 usec iterate
+frame_delay : 100 usec iterate
+shift_delay : 2500 usec iterate
+
+row : serials pix ld_go 1 fr2serial ld_go
+serial_read : parallels row iterate 
+frame_transfer : parallels image2fr ld_go
+raster : frame_transfer shift_delay serial_read frame_delay
+
+run : raster iterate
+f : 50 frame_transfer iterate
+g : 1 run
+s : serial_read
+
+" TESS CCID-20" ,t nl
+1 doPrompt !

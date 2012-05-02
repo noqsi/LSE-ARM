@@ -1,24 +1,55 @@
 # $Id$
 
-CFLAGS  = -g -O -I../../include -mcpu=arm7tdmi -Wall
+AS = arm-elf-as
+CC = arm-elf-gcc
+
+CFLAGS  = -g -O -I../../include -mcpu=arm7tdmi -msoft-float -Wall
 
 LIBDIR = ../../lib
 BOOT= $(LIBDIR)/boot.o
-LDFILE = sam7x256-exec-flash.ld
-ASFLAGS = -mcpu=arm7tdmi -gstabs
-LDFLAGS = -nostartfiles -Lgcc -L$(LIBDIR) 
+LDFILE = sam7x256-exec-flash.ld 
+ASFLAGS = -mcpu=arm7tdmi -msoft-float -gstabs
+LDFLAGS = -msoft-float -nostartfiles -Lgcc -L$(LIBDIR) 
 LIBS = -llse-arm -lm
 
-%.o:%.c
-	arm-elf-gcc -c $(CFLAGS) $< -o $@
+UPLOAD =	openocd -d0 --file=openocd.cfg \
+		-c 'init;init;arm7_9 fast_memory_access enable' \
+		-c 'halt;flash write_image $< 0x100000;reset' \
+		-c 'shutdown'
 
-%.o:%.s
-	arm-elf-as $(ASFLAGS) $< -o $@
+# This rule strips comments and blank lines from LSE source.
 
-TESS = TESScamera.o lse_seq.o sequencer.o
+%.txt:%.lse
+	sed -e '/^#/d' -e '/^$$/d' $< >$@
 
-TESScamera.elf:  $(LDFILE) $(TESS)
-	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) $(TESS) $(LIBS)
+TESSTUFF = lse_seq.o sequencer.o
+
+# The version that runs on the EK board
+# For now, use the c20 version of LSE code
+
+upload_ek: TESSek.elf
+	$(UPLOAD)
+
+TESSek.elf:  $(LDFILE) $(TESSTUFF) TESSek.o app_lse_ek.o
+	$(CC) -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT)  TESSek.o \
+	$(TESSTUFF) $(LIBS) app_lse_ek.o
+
+TESSek.o : TESScamera.c
+	$(CC) $(CFLAGS) -c -DEKBOARD=1 -o $@ TESScamera.c
+
+app_lse_ek.o : ek.txt
+
+# The version for CCID-20 with TESS electronics
+
+upload_c20 : TESSc20.elf
+	$(UPLOAD)
+
+TESSc20.elf:  $(LDFILE) $(TESSTUFF) TESScamera.o app_lse_c20.o
+	$(CC) -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) TESScamera.o \
+	$(TESSTUFF) $(LIBS) app_lse_c20.o
+
+app_lse_c20.o : c20.txt
+
 
 clean:
 	rm -f *.o *.elf

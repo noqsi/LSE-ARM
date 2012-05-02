@@ -23,13 +23,15 @@ void SeqPrimitives( void );
 Let everyone know what the master clock frequency is.
 */
 
+#ifdef EKBOARD	/* Atmel dev board, not the real TESS hardware */
+
+const unsigned mck_hz = 18432000;
+
+#else /* TESS hardware uses a faster crystal */
+
 const unsigned mck_hz = 29491200;
 
-/*
-Provide an "application". Placeholder.
-*/
-
-char app_lse[] = "1 doPrompt !\n";
+#endif
 
 /*
 Provide I/O primitives.
@@ -67,6 +69,22 @@ get no second chance short of a processor reset!
 */
 
 	watchdog_disable();
+	
+#ifdef EKBOARD	/* Atmel dev board, not the real TESS hardware */
+
+/* 
+
+Suitable oscillator setup for AT91SAM7X-EK eval card. The main oscillator is
+18.432 MHz. Use 0x40 for OSCOUNT because that's what the ROM code seems to use,
+and I have no better info.
+
+*/
+
+	PMC->mor = MOSCEN | OSCOUNT(0x40);
+
+	while( !(PMC->sr & MOSCS));	/* wait for main osc stability */
+
+#else
 
 /* 
 
@@ -76,6 +94,8 @@ is 29.4912 MHz.
 */
 
 	PMC->mor = OSCBYPASS;
+
+#endif
 
 /*
 Select the main clock, straight through. If you want something else
@@ -99,6 +119,9 @@ for clarity and to avoid conflict.
 	PIOA->asr = 0x3;	/* enable TXD0, RXD0 */
 	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
 	PIOA->oer = 0x2;	/* enable output on TXD0 */
+	
+	PIOB->oer = 0x780000;
+	PIOB->sodr = 0x500000;	
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
@@ -137,8 +160,8 @@ void app_main()
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = USART0;
 	usart_list[0].baud = 115200;
-	usart_list[0].flags = UF_CR;	/* CR is end of line */
-	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
+	usart_list[0].flags = UF_CR	/* CR is end of line */
+			| UF_BREAK;	/* Interrupt on break from terminal */
 	usart_init( usart_list, USARTS ); 
 	lse_init();
 	SeqPrimitives();	/* setup the seq words */
