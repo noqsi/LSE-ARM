@@ -120,8 +120,11 @@ for clarity and to avoid conflict.
 	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
 	PIOA->oer = 0x2;	/* enable output on TXD0 */
 	
-	PIOB->oer = 0x780000;
-	PIOB->sodr = 0x500000;	
+//	PIOB->oer = 0x780000;	/* eval kit LED's */
+//	PIOB->sodr = 0x500000;	
+//	PIOB->codr = 0x280000;
+	
+//	for(;;); /* debug */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
@@ -162,7 +165,7 @@ void app_main()
 	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_CR	/* CR is end of line */
 			| UF_BREAK;	/* Interrupt on break from terminal */
-	usart_init( usart_list, USARTS ); 
+	usart_init( usart_list, USARTS );
 	lse_init();
 	SeqPrimitives();	/* setup the seq words */
 	lse_main();

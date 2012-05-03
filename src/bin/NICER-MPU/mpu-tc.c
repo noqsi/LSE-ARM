@@ -106,7 +106,8 @@ finish:
 		
 		p->btime = c->rb;	
 		
-		p->tag |= B_BBIN & ~PIOB->pdsr;
+		p->tag |= B_BBIN & ~PIOB->pdsr;	/* record event tags */
+		p->tag |= n;			/* record channel # */
 		p->done = c->cv;		/* record finish time */
 		photon = !photon;		/* toggle active buffer */
 	}
