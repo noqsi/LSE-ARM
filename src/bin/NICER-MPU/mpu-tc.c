@@ -156,7 +156,7 @@ static void pps_isr( void )
 		 
 		if( status & LDRAS ) {	/* Grab the PPS time from RA. */
 	
-		/* test code for checking with 80 kHz TCXO */
+		/* test code for checking with Matt's 80 kHz OCXO */
 		
 //			static int prescale = 1;
 //		
@@ -243,10 +243,13 @@ static void pps( void ) 		/* pps time for LSE */
 
 static void tc_on( void )
 {
-	PPSTC.ccr = SWTRIG;		/* reset clock, allow register loads */
+	ticks = 0;
+	pps32ms = 0xffffffff;  	 /* An unlikely value */
+	GATE_PORT->codr = GATE_BIT;     /* Gate off clocks */
+	PPSTC.ccr = SWTRIG;		/* reset count, allow register loads */
 	X0TC.ccr = SWTRIG;
 	X1TC.ccr = SWTRIG;
-	GATE_PORT->sodr = GATE_BIT;
+	GATE_PORT->sodr = GATE_BIT;	/* All clocks on simultaneously */
 }
 
 static void photonq( void )		/* test for a photon in either buffer */
