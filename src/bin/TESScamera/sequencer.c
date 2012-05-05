@@ -78,9 +78,9 @@ void sequencer_go( int start_block, int blocks, int count )
 		
 	if( 1 == blocks ) {	/* Use the hardware repeat */
 		while( count > 0 ) {
-			int c = min( 8, count );
+			int c = min( 32, count );
 			fifowait();
-			PIOB->odsr = (start_block<<3) | (c-1) |
+			PIOB->odsr = (start_block<<12) | (c-1) |
 				(SEQ_CMD_DAT<<SEQ_ADDR_SHIFT) | SEQ_STR;
 			count -= c;
 			ackwait();
@@ -93,7 +93,7 @@ void sequencer_go( int start_block, int blocks, int count )
 			int n = blocks;
 			while( n-- ) {
 				fifowait();
-				PIOB->odsr = (b++<<3) |
+				PIOB->odsr = (b++<<12) |
 				(SEQ_CMD_DAT<<SEQ_ADDR_SHIFT) | SEQ_STR;
 				ackwait();
 			}
