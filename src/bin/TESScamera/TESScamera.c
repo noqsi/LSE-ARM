@@ -27,7 +27,7 @@ Let everyone know what the master clock frequency is.
 
 const unsigned mck_hz = 18432000;
 
-#else /* TESS hardware uses a faster crystal */
+#else /* TESS hardware uses a faster oscillator */
 
 const unsigned mck_hz = 29491200;
 
@@ -164,7 +164,9 @@ void app_main()
 	usart_list[0].usart = USART0;
 	usart_list[0].baud = 115200;
 	usart_list[0].flags = UF_CR	/* CR is end of line */
-			| UF_BREAK;	/* Interrupt on break from terminal */
+			| UF_BREAK	/* Interrupt on break from terminal */
+			| UF_INTR;	/* Interrupt on special char */
+	usart_list[0].intr_char = 2;	/* ^B */
 	usart_init( usart_list, USARTS );
 	lse_init();
 	SeqPrimitives();	/* setup the seq words */

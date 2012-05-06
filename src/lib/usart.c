@@ -31,6 +31,7 @@ void usart_init( struct usart_parameters *p, int n ) {
 		/* assume simplest (DBGU) brgr variant. */
 		u->brgr = (bck + p[i].baud/2)/p[i].baud;	/* set baud, round to nearest */
 		u->cr = RXEN | TXEN;	/* enable RX/TX */
+		u->ier = RXRDY;
 		if( p[i].flags & UF_BREAK ) u->ier = FRAME | RXBRK;	/* enable user interrupt */
 	}
 }
@@ -46,13 +47,14 @@ instead, a break causes a FRAME error. So, in the above we consider either as a 
 
 char usart_getc( int un )
 {
-	struct usart *u = up[un].usart;
+	struct usart_parameters *u = up+un;
 	char c;
 
-	while( !(u->csr & RXRDY )) ;		/* Spin */
-	c = u->rhr;
+	while( !(u->flags & UF_RXRDY )) ;		/* Spin */
+	c = u->rxchar;
+	u->flags &= ~UF_RXRDY;
 
-	if( (c == '\r') && (up[un].flags & UF_CR)) c = '\n';
+	if( (c == '\r') && (u->flags & UF_CR)) c = '\n';
 	return c;
 }
 
@@ -80,9 +82,22 @@ extern void user_interrupt( void );
 void usart_interrupt( int un )
 {
 	struct usart *u = up[un].usart;
-	u->cr = RSTRX | RSTSTA;
-	u->cr = RXEN;
-	user_interrupt();
+		
+	if( u->csr & RXRDY ) {		/* have a character */
+		char c =  u->rhr;
+		if( (up[un].flags & UF_INTR) && ( c == up[un].intr_char ))
+			user_interrupt();
+		else {
+			up[un].rxchar = c;
+			up[un].flags |= UF_RXRDY;
+		}
+	}
+	else {				/* assume break or error */
+		u->cr = RSTRX | RSTSTA;
+		u->cr = RXEN;
+		up[un].flags &= ~UF_RXRDY;	/* invalidate any input */
+		user_interrupt();
+	}
 }
 
 /*

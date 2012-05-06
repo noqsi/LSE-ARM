@@ -14,7 +14,7 @@ LIBS = -llse-arm -lm
 
 UPLOAD =	openocd -d0 --file=openocd.cfg \
 		-c 'init;init;arm7_9 fast_memory_access enable' \
-		-c 'halt;flash write_image $< 0x100000;reset' \
+		-c 'halt;flash write_image $< 0x100000;soft_reset_halt;resume' \
 		-c 'shutdown'
 
 # This rule strips comments and blank lines from LSE source.

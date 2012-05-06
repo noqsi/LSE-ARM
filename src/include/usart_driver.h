@@ -1,15 +1,21 @@
 /* $Id$ */
 
+/* not just parameters anymore */
+
 struct usart_parameters {
 	struct usart *usart;	/* pointer to the hardware device */
 	unsigned baud;		/* Baud rate */
-	unsigned flags;		/* flags to driver */
+	unsigned flags;		/* flags to/from driver */
+	char intr_char;		/* character for user interrupt */
+	char rxchar;		/* last received character */
 };
 
 /* Flag definitions */
 
 #define UF_CR	1		/* For serial controllers that end line with CR */
 #define UF_BREAK 2		/* Enable interrupt on break (framing error) */
+#define UF_INTR 4		/* Enable interrupt on intr_char */
+#define UF_RXRDY 8		/* Have a character */
 	
 extern void usart_init( struct usart_parameters *p, int n );
 extern char usart_getc( int un );

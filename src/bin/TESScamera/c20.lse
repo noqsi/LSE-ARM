@@ -437,6 +437,7 @@ run : raster iterate
 f : 50 frame_transfer iterate
 g : 1 run
 s : serial_read
+go : g repeat
 
 " TESS CCID-20" ,t nl
 1 doPrompt !
