@@ -118,8 +118,11 @@ for clarity and to avoid conflict.
 
 	PIOA->asr = 0x3;	/* enable TXD0, RXD0 */
 	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
-	PIOA->oer = 0x2;	/* enable output on TXD0 */
-	
+	PIOA->oer = 0x63002;	/* enable output on TXD0, DS0, DS8, DCK, DD */
+	PIOB->oer = 0x4fc0000;	/* enable address lines on Port B*/
+
+	PIOA->pudr = 0x7fffffff;	/* get rid of pull up resistors on Port A */
+	PIOB->pudr = 0x7fffffff;	/* get rid of pull up resistors on Port B */	
 //	PIOB->oer = 0x780000;	/* eval kit LED's */
 //	PIOB->sodr = 0x500000;	
 //	PIOB->codr = 0x280000;
