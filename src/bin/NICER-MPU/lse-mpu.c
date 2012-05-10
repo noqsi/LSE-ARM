@@ -89,6 +89,20 @@ static void sysc_isr( void )
  
 void app_configure( void )
 {
+/*
+
+Enable reset via NRST pin. It's important to do this early. Without this, if you
+somehow make it catatonic by disabling the processor clock you won't be able do
+anything through JTAG. If an initialization bug causes the problem, you won't be
+able to halt the processor quickly enough to get it under control after power-up
+or reset. But if the processor enters the catatonic state after execution of the
+line below, you can escape by issuing "jtag_reset 1 1; halt" followed by
+"jtag_reset 0 0" in OpenOCD. This will halt the processor, and then you can
+reflash it to fix the bug. 
+
+*/
+
+	RSTC->mr = RSTC_KEY | URSTEN;
 
 /* 
 
@@ -149,12 +163,6 @@ Select the PLL clock.
 */
 
 	PMC->mckr |= CSS_PLL;
-
-/*
-Enable reset via NRST pin.
-*/
-
-	RSTC->mr = RSTC_KEY | URSTEN;
 
 /*
 Turn on peripheral clocks, as needed.
