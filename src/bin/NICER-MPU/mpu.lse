@@ -99,7 +99,7 @@ event : " tag: " ,t photon @ ,h nl 6 (ef) iterate nl 0 photon !
 poll : photon? then event
 poll : pps? then ppps
 
-# Go interactive
+# Identify myself
 
-nl nl " NICER MPU" t 1 doPrompt !
+nl nl " NICER MPU" t
 

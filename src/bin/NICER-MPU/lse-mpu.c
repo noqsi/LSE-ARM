@@ -39,8 +39,8 @@ Each is a null-terminated character array made up of
 lines ending in \n.
 */
 
-extern char init_lse[], app_lse[];
-char * const init_source[] = {init_lse, app_lse, 0};
+extern char init_lse[], app_lse[], stamp[];
+char * const init_source[] = {init_lse, app_lse, stamp, "1 doPrompt !\n", 0};
 
 /*
 A little custom feature is to blink a light at 1 hz.

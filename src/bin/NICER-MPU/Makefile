@@ -20,10 +20,18 @@ ELF_FILE = lse-mpu.elf
 	
 
 lse-mpu.elf:  $(LDFILE) lse-mpu.o mpu-tc.o app_lse.o pulsar_spi.o \
-		pulsar_spi_primitives.o
+		pulsar_spi_primitives.o stamp.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ \
 		$(BOOT) lse-mpu.o mpu-tc.o app_lse.o pulsar_spi.o \
-		pulsar_spi_primitives.o $(LIBS)
+		pulsar_spi_primitives.o stamp.o $(LIBS)
+	rm stamp.lse
+
+stamp.lse :
+	echo -n '" ' >stamp.lse
+	echo -n `git log -1 --format="%cd %h"` >>stamp.lse
+	echo '" t' >>stamp.lse
+
+stamp.o : stamp.txt
 
 app_lse.o : mpu.txt
 
