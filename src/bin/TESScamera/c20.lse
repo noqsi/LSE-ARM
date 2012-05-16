@@ -440,4 +440,3 @@ s : serial_read
 go : g repeat
 
 " TESS CCID-20" ,t nl
-1 doPrompt !

@@ -34,6 +34,16 @@ const unsigned mck_hz = 29491200;
 #endif
 
 /*
+List the source "files" to read at initialization.
+Each is a null-terminated character array made up of 
+lines ending in \n.
+*/
+
+extern char init_lse[], app_lse[], stamp[];
+char * const init_source[] = {init_lse, app_lse, stamp, "1 doPrompt !\n", 0};
+
+
+/*
 Provide I/O primitives.
 */
 

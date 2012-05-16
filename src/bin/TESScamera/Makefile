@@ -30,9 +30,10 @@ TESSTUFF = lse_seq.o sequencer.o
 upload_ek: TESSek.elf
 	$(UPLOAD)
 
-TESSek.elf:  $(LDFILE) $(TESSTUFF) TESSek.o app_lse_ek.o
+TESSek.elf:  $(LDFILE) $(TESSTUFF) TESSek.o app_lse_ek.o stamp.o
 	$(CC) -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT)  TESSek.o \
-	$(TESSTUFF) $(LIBS) app_lse_ek.o
+	$(TESSTUFF) $(LIBS) app_lse_ek.o stamp.o
+	rm stamp.lse
 
 TESSek.o : TESScamera.c
 	$(CC) $(CFLAGS) -c -DEKBOARD=1 -o $@ TESScamera.c
@@ -44,12 +45,21 @@ app_lse_ek.o : ek.txt
 upload_c20 : TESSc20.elf
 	$(UPLOAD)
 
-TESSc20.elf:  $(LDFILE) $(TESSTUFF) TESScamera.o app_lse_c20.o
+TESSc20.elf:  $(LDFILE) $(TESSTUFF) TESScamera.o app_lse_c20.o stamp.o
 	$(CC) -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) TESScamera.o \
-	$(TESSTUFF) $(LIBS) app_lse_c20.o
+	$(TESSTUFF) $(LIBS) app_lse_c20.o stamp.o
+	rm stamp.lse
 
 app_lse_c20.o : c20.txt
 
+stamp.lse :
+	echo -n '" ' >stamp.lse
+	echo -n `git log -1 --format="%cd %h"` >>stamp.lse
+	echo '" t' >>stamp.lse
+
+stamp.o : stamp.txt
+
+app_lse.o : mpu.txt
 
 clean:
 	rm -f *.o *.elf

@@ -10,4 +10,3 @@ lshift : 2 *
 bit : 1 swap <<
 
 nl nl " TESS EK" ,t nl
-1 doPrompt !
