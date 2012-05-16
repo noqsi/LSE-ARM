@@ -199,68 +199,101 @@ void primitive_io_abort( void )
 	abort_input = 1;
 }
 
-void get( void )
+int char_ready( void )
 {
-	static char* mem = init_lse;
-	static int inited = 0;		/* If 0, reading from init_lse code */
+	return 1; /* stub */
+}
+
+void get_nowait( void )
+{
+	extern char * const init_source[];
+	static char * const *source_block = init_source;
+	static char *source_char;
 	static char inbuf[INBUFSZ];
+	static char *ibp;
+	static char *const inbuf_source[] = { inbuf, 0 };
 	
 	flag = 1;	/* assume success */
+	
+	if( abort_input ) {
+		have_ungotten = 0;
+		source_block = inbuf_source + 1;	/* null */
+		ibp = 0;
+		abort_input = 0;
+	}
 	
 	if( have_ungotten ) {
 		*--sp = ungotten;
 		have_ungotten = 0;
 		return;
 	}
+	
+	while( *source_block ) {		/* get input from memory */
+	
+		if( !source_char ) {		/* point to start of block */
+			source_char = *source_block;
+		}
 		
-	if( !inited ) {		/* build LSE itself */
-		if( *mem ) {
-			*--sp = *mem++;
+		if( *source_char ) {		/* hey, we got one! */
+			*--sp = *source_char++;
 			return;
 		}
-		mem = app_lse;	/* now build app */
-		inited = 1;
+		
+		/* 
+		at this point, we have a null character, so
+		attempt to move to next block.
+		*/
+		
+		source_block += 1;
+		source_char = 0;
 	}
+	
 		
-	if( abort_input || !*mem ) {
-		
-		/* If we get here, there is no more input in memory,
-		so grab a line from the input stream */
-		
-		abort_input = 0;
-		
+	/* If we get here, there is no more input in memory,
+	so grab a line from the input stream */
+				
+	if( ibp == 0 ) {	/* start new line */
+		ibp = inbuf;
 		if( FlowPrompt >= 0 ) writechar( FlowPrompt );
-	
-		for( mem = inbuf;; ) {
-			char c = readchar();
-			
-			if( c == '\n' ) {	/* end of line */
-				*mem++ = c;
-				*mem++ = 0;
-				mem = inbuf;
-				break;
-			}
-			
-			if( c == '\b' ) {
-				writechar( ' ' );
-				if( mem > inbuf ) {	/* backspace, erase last */
-					writechar( '\b' );
-					mem -= 1;
-				}
-				continue;
-			}
-			
-			if( mem >= inbuf + INBUFSZ - 3 ) {	/* buffer full */
-				writechar( 7 );			/* bell */
-				continue;
-			}
-			
-			*mem++ = c;
-		}
 	}
 	
-	*--sp = *mem++;
-	return;			
+	if( char_ready() ) {
+		char c = readchar();
+			
+		if( c == '\n' ) {	/* end of line */
+			*ibp++ = c;
+			*ibp++ = 0;
+			ibp = 0;
+			source_block = inbuf_source;
+			get_nowait();	/* tail recursion */
+			return;
+		}
+		
+		/* if we reach here, we won't have a char to return */
+		
+		flag = 0;
+			
+		if( c == '\b' ) {
+			writechar( ' ' );
+			if( ibp > inbuf ) {	/* backspace, erase last */
+				writechar( '\b' );
+				ibp -= 1;
+			}
+			return;
+		}
+			
+		if( ibp >= inbuf + INBUFSZ - 3 ) {	/* buffer full */
+			writechar( 7 );			/* bell */
+			return;
+		}
+			
+		*ibp++ = c;
+	}
+}
+
+void get( void )
+{
+	do { get_nowait(); } while( !flag );
 }
 
 /*

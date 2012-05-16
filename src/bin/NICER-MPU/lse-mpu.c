@@ -34,6 +34,15 @@ Let everyone know what the master clock frequency is.
 const unsigned mck_hz = (MAINCLK/(PLLDIV*(1<<PRESCALE)))*PLLMUL;
 
 /*
+List the source "files" to read at initialization.
+Each is a null-terminated character array made up of 
+lines ending in \n.
+*/
+
+extern char init_lse[], app_lse[];
+char * const init_source[] = {init_lse, app_lse, 0};
+
+/*
 A little custom feature is to blink a light at 1 hz.
 Do this on the system tick.
 */
