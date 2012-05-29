@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* 
 Imported from SXI, which used an older device than the SAM7X,
 so it could use some updating.
@@ -98,6 +96,13 @@ void usart_interrupt( int un )
 		up[un].flags &= ~UF_RXRDY;	/* invalidate any input */
 		user_interrupt();
 	}
+}
+
+/* Test for ready */
+
+int usart_rxrdy( int un )
+{
+	return (up[un].flags & UF_RXRDY) != 0;
 }
 
 /*

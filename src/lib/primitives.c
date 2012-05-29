@@ -199,10 +199,10 @@ void primitive_io_abort( void )
 	abort_input = 1;
 }
 
-int char_ready( void )
-{
-	return 1; /* stub */
-}
+// int char_ready( void )
+// {
+//	return 1; /* stub */
+// }
 
 void get_nowait( void )
 {
@@ -289,6 +289,8 @@ void get_nowait( void )
 			
 		*ibp++ = c;
 	}
+	
+	flag = 0;	/* fail */
 }
 
 void get( void )
