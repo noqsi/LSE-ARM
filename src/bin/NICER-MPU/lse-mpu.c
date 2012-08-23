@@ -80,6 +80,14 @@ void to_led ( void )
 }
 
 /*
+LSE primitive to do a hard reset.
+*/
+void hard_reset( void )
+{
+	RSTC->cr = EXTRST | PERRST | PROCRST | RSTC_KEY;
+}
+
+/*
 Provide I/O primitives.
 */
 
@@ -264,6 +272,7 @@ void app_main()
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
 	build_primitive( to_led, ">LED" );
+	build_primitive( hard_reset, "RESET" );
 	tc_primitives();
 	pulsar_spi_primitives();
 	pulsar_spi_init( SPI0 );
