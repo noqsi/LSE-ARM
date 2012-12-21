@@ -35,9 +35,9 @@ cell	*sp,		/* top active item */
         *rsp,		/* top active return stack item */
         *lc,		/* interpreter's location counter */
 	*deftop,	/* top of definition dictionary */
-//	*deflast,	/* last entry in definition dictionary */
+	*deflast,	/* last entry in definition dictionary */
 	*constop,	/* top of constant dictionary */
-//	*constlast,	/* last entry of constant dictionary */
+	*constlast,	/* last entry of constant dictionary */
 	*defend,	/* end of definition area */
 	*constend;	/* end of constant area */
 		

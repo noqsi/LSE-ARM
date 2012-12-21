@@ -42,7 +42,6 @@ lines ending in \n.
 extern char init_lse[], app_lse[], stamp[];
 char * const init_source[] = {init_lse, app_lse, stamp, "1 doPrompt !\n", 0};
 
-
 /*
 Provide I/O primitives.
 */
