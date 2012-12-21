@@ -86,7 +86,7 @@ statb : B-PDSR @ &
 ppsls :variable
 
 pps? : pps ppsls @ = no? drop
-ppps : " pps: " ,t pps dup ppsls ! swap ,h sp ,h nl
+ppps : 1 >LED " pps: " ,t pps dup ppsls ! swap ,h sp ,h nl 0 >LED
 
 mpps : pps? if ppps repeat
 
@@ -94,7 +94,7 @@ mpps : pps? if ppps repeat
 # print event data
 
 (ef) : sp photon count [] @ ,
-event : " tag: " ,t photon @ ,h nl 6 (ef) iterate nl 0 photon !
+event : 1 >LED " tag: " ,t photon @ ,h nl 6 (ef) iterate nl 0 photon ! 0 >LED
 
 poll : photon? then event
 poll : pps? then ppps
