@@ -95,7 +95,7 @@ fdivide, fmodd, fneg, and, or, xor, not, dupp, swap, drop, pick, rot,
 equal, greater, less, equal0, greater0, less0, fequal, fgreater,
 fless, fequal0, fgreater0, fless0, setflag, clearflag, exitrue,
 exitfalse, exitword, iftrue, iffalse, repeat, repeatrue, s2r, r2s,
-rcopy, rdrop, put, unget, get, skip_space, skip_to_nl, get_token,
+rcopy, rdrop, put, unget, get, get_nowait, skip_space, skip_to_nl, get_token,
 fixate_literal_string, get_name, make_def, interpret, fixate_colon_def,
 make_named_constant, make_array, make_constant, find, compile_to_def,
 compile_to_buffer, literal, noop, cells, putd, putx, putf, depth, nl, space,
@@ -117,6 +117,7 @@ void put_c_string( char *s );
 void copy_static( void );
 void put_hex( unsigned x );
 void primitive_io_abort( void );
+int char_ready( void );
 
 /*
  * $Log$

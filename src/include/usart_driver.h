@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* not just parameters anymore */
 
 struct usart_parameters {
@@ -21,6 +19,7 @@ extern void usart_init( struct usart_parameters *p, int n );
 extern char usart_getc( int un );
 extern void usart_putc( int un, char c );
 extern void usart_interrupt( int un );
+extern int usart_rxrdy( int un );
 
 /*
  * $Log$

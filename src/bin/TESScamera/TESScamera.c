@@ -51,6 +51,8 @@ char readchar( void ){ return usart_getc( 0 ); }
 
 void writechar( char c ){ usart_putc( 0, c ); }
 
+int char_ready( void ) { return usart_rxrdy( 0 ); }
+
 /*
 Provide glue for USART ISR
 */

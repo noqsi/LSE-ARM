@@ -53,9 +53,9 @@ static void blink( void )
 {
 	static unsigned count;
 	if( count < TICK_HZ/2 )
-		PIOA->sodr = 0x00100000;
+		PIOA->sodr = 0x08000000;
 	else
-		PIOA->codr = 0x00100000;
+		PIOA->codr = 0x08000000;
 	count += 1;
 	if( count >= TICK_HZ ) count = 0;
 
@@ -70,11 +70,29 @@ LSE primitive to get milliseconds since boot.
 void msec ( void ) {*--sp = ticks/MSEC_TICKS;}
 
 /*
+LSE primitive to control red LED
+*/
+
+void to_led ( void )
+{
+	if( *sp++ ) PIOA->codr = 0x04000000;
+	else PIOA->sodr = 0x04000000;
+}
+
+/*
+LSE primitive to do a hard reset.
+*/
+void hard_reset( void )
+{
+	RSTC->cr = EXTRST | PERRST | PROCRST | RSTC_KEY;
+}
+
+/*
 Provide I/O primitives.
 */
 
 char readchar( void ){ return usart_getc( 0 ); }
-
+int char_ready( void){ return 1; } // Stub: no tasking
 void writechar( char c ){ usart_putc( 0, c ); }
 
 /*
@@ -188,8 +206,8 @@ for clarity and to avoid conflict.
 
 	PIOA->asr = 0xc003f800;	/* enable TXD0, RXD0, SPI0 */
 	PIOA->pdr = 0xc0038000;	/* relinquish pins to USART0, SPI0 */
-	PIOA->oer = 0x03300000;	/* enable LED's */
-	PIOA->sodr = 0x03300000;	/* turn off LED's */
+	PIOA->oer = 0x0c000000;	/* enable LED's */
+	PIOA->sodr = 0x0c000000;	/* turn off LED's */
 	PIOA->oer = 0x00000610;		/* bitbang DAC */
 	PIOA->oer = 0x00007800;		/* bitbang SPI0 select bits */
 	PIOA->sodr = 0x00007800;	/* deselect */
@@ -253,6 +271,8 @@ void app_main()
 	lse_init();
 	/* build application primitives here */
 	build_primitive( msec, "msec" );
+	build_primitive( to_led, ">LED" );
+	build_primitive( hard_reset, "RESET" );
 	tc_primitives();
 	pulsar_spi_primitives();
 	pulsar_spi_init( SPI0 );
