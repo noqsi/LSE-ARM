@@ -1,3 +1,5 @@
+#include "cbuf.h"
+
 int cbuf_put( struct cbuf *b, char c )
 {
 	char *new = b->o + 1;
