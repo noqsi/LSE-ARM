@@ -27,3 +27,8 @@ void cbuf_init( struct cbuf *b, char *buf, unsigned size )
 	b->i = b->o = b->b = buf;
 	b->size = size;
 }
+
+void cbuf_clear( struct cbuf *b )
+{
+	b->i = b->o;
+}

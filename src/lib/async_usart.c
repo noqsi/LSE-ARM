@@ -1,28 +1,22 @@
-/* $Id$ */
-
-/* 
-Imported from SXI, which used an older device than the SAM7X,
-so it could use some updating.
-*/
-
 #include "usart.h"
-#include "usart_driver.h"
+#include "async_usart.h"
 #include "aic_driver.h"
 
 extern const unsigned mck_hz;	/* Master clock */
 
 /*
- * Init USART.
+ * Init USART. Note that the caller should explicitly set up the async_usart
+ * structure, including initializing the cbuf substructures, before calling this.
  */
 
-static struct usart_parameters *up;
+static struct async_usart *up;
 
-void usart_init( struct usart_parameters *p, int n ) {
+void async_usart_init( struct async_usart *p, int n ) {
 	int i;
 	unsigned bck = mck_hz/16;	/* Baud rate generator clock */
 	
-	up = p;
-	
+	up = p;				/* remember where these are */
+		
 	for( i = 0; i < n; i += 1 ) {
 		struct usart *u = p[i].usart;
 	
@@ -31,7 +25,7 @@ void usart_init( struct usart_parameters *p, int n ) {
 		/* assume simplest (DBGU) brgr variant. */
 		u->brgr = (bck + p[i].baud/2)/p[i].baud;	/* set baud, round to nearest */
 		u->cr = RXEN | TXEN;	/* enable RX/TX */
-		u->ier = RXRDY;
+		u->ier = RXRDY;		/* only RX interrupt until we have TX data in q */
 		if( p[i].flags & UF_BREAK ) u->ier = FRAME | RXBRK;	/* enable user interrupt */
 	}
 }
@@ -42,32 +36,65 @@ instead, a break causes a FRAME error. So, in the above we consider either as a 
 */
 
 /*
- * Synchronous read and write.
+ * Blocking single character read and write.
  */
 
-char usart_getc( int un )
+char async_usart_getc( int un )
 {
-	struct usart_parameters *u = up+un;
-	char c;
+	struct async_usart *u = up+un;
+	int c;
+	char cc;
 
-	while( !(u->flags & UF_RXRDY )) ;		/* Spin */
-	c = u->rxchar;
-	u->flags &= ~UF_RXRDY;
-
-	if( (c == '\r') && (u->flags & UF_CR)) c = '\n';
-	return c;
+	while(( c = cbuf_get(u->rxbuf )) == CBUF_FAIL) ;	/* Spin */
+	
+	cc = (char) c;
+	if( (cc == '\r') && (u->flags & UF_CR)) cc = '\n';
+	return cc;
 }
 
-void usart_putc( int un, char c )
+void async_usart_putc( int un, char c )
 {
-	struct usart *u = up[un].usart;
+	struct async_usart *u = up+un;
 
-	if( (c == '\n') && (up[un].flags & UF_CR)) c = '\r';
+	if( (c == '\n') && (u->flags & UF_CR)) c = '\r';
 
-	while( !(u->csr & TXRDY )) ;		/* Spin */
-	u->thr = c;
+	while( cbuf_put( u->txbuf, c ) == CBUF_FAIL ) ;		/* Spin */
+	
+	u->usart->ier = TXRDY;						/* Start */
 }
 
+/*
+ * Non-blocking bulk read/write.
+ */
+
+int async_usart_read( int un, char *b, int n )
+{
+	struct async_usart *u = up+un;
+	int i;
+	
+	for( i = 0; i < n; i += 1 ) {
+		int c = cbuf_get( u->rxbuf );
+		if( c == CBUF_FAIL ) break;
+		*b++ = (char) c;
+	}
+	
+	return i;
+}
+
+int async_usart_write( int un, char *b, int n )
+{
+	struct async_usart *u = up+un;
+	int i;
+	
+	for( i = 0; i < n; i += 1 ) {
+		if( cbuf_put( u->txbuf, *b ) == CBUF_FAIL ) break;
+		b += 1;
+	}
+	
+	if( i > 0 ) u->usart->ier = TXRDY;		/* Start */
+	
+	return i;
+}
 
 /*
  * Interrupt handler
@@ -77,7 +104,7 @@ void usart_putc( int un, char c )
  * and if AIC is used, does the EOICR thing.
  */
 
-extern void user_interrupt( void );
+extern void user_interrupt( void );	/* Called for break or interrupt char */
 
 void usart_interrupt( int un )
 {
@@ -88,44 +115,21 @@ void usart_interrupt( int un )
 		if( (up[un].flags & UF_INTR) && ( c == up[un].intr_char ))
 			user_interrupt();
 		else {
-			up[un].rxchar = c;
-			up[un].flags |= UF_RXRDY;
+			(void) cbuf_put( up[un].rxbuf, c);	/* ignore errors for now */
 		}
+	}
+	if( u->csr & TXRDY ) {		/* have a character */
+		int c =  cbuf_get( up[un].txbuf );
+		
+		if( c == CBUF_FAIL ) u->idr = TXRDY;		/* Empty, stop output */
+		else u->thr = c;
 	}
 	else {				/* assume break or error */
 		u->cr = RSTRX | RSTSTA;
 		u->cr = RXEN;
-		up[un].flags &= ~UF_RXRDY;	/* invalidate any input */
+		cbuf_clear( up[un].rxbuf );	/* clear any existing input */
 		user_interrupt();
 	}
 }
 
-/*
- * $Log$
- * Revision 1.4  2010-06-10 17:53:07  jpd
- * Completed interrupt infrastructure.
- * Periodic timer interrupt working on SAM7A3.
- * Commented out some unnecessary definitions.
- * Added ability to display free memory.
- *
- * Revision 1.3  2010-06-08 20:25:38  jpd
- * Interrupts working with SAM7X256 board, too.
- *
- * Revision 1.2  2010-06-08 18:57:41  jpd
- * Faults and user interrupts now work on SAM7A3
- *
- * Revision 1.1  2010-06-07 00:39:01  jpd
- * Massive reorganization of source tree.
- *
- * Revision 1.3  2010-06-05 17:32:45  jpd
- * More reorganization.
- *
- * Revision 1.2  2009-06-01 16:54:19  jpd
- * Installation instructions.
- * Fix line editing, allow external reset.
- *
- * Revision 1.1  2009-03-14 22:58:06  jpd
- * Can now run LSE in an ARM SAM7X!
- *
- */
 
