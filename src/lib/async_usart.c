@@ -106,7 +106,7 @@ int async_usart_write( int un, char *b, int n )
 
 extern void user_interrupt( void );	/* Called for break or interrupt char */
 
-void usart_interrupt( int un )
+void async_usart_interrupt( int un )
 {
 	struct usart *u = up[un].usart;
 		
