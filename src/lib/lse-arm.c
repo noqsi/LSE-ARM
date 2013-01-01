@@ -136,20 +136,19 @@ void setup_memory( void )
 //	constlast = 0;
 	cbuf = (cell) compile_buf;
 	
-	free = &free - &end;		/* hack to estimate free mem */
-	free -= RESERVE;		/* calloc gets upset if not enough here */
+	/* hack to estimate free mem, allocate to dictionaries */
+
+	free = &free - &end - RESERVE;
+	deftop = sbrk( sizeof(cell) * (&free - &end - RESERVE ));
 	
-	
-	deftop = calloc( free/2, sizeof(cell));		// allocate equal amounts
-	constop= calloc( free/2, sizeof(cell));		// to definitions and constants
-	if( !constop ) {
+	if( deftop == (void *) -1 ) {
 		put_c_string( "\nDictionary memory allocation failed!\n" );
 		for(;;);
 	}
-	defend = deftop + free/2;
-	constend = constop + free/2;
+	
+	defend = constop = deftop + free/2;
+	constend = deftop + free;
 }
-
 
 /*
  * ascii_to_string takes a null terminated C string and turns it into
