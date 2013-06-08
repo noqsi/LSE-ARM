@@ -1,4 +1,4 @@
-#include "adc.h"
+struct adc;		// Tell C not to worry about what this is
 
 void adc_init( struct adc **a, int n );
 extern void adc_sleep( int a );

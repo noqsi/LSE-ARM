@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
-    Copyright 2004, 2005, 2006, 2009, 2010, 2011 
+    Copyright 2004, 2005, 2006, 2009, 2010, 2011, 2013 
     John P. Doty and Matthew P. Wampler-Doty
 
     This file is part of LSE-ARM.
@@ -125,6 +125,8 @@ void xeq( void )
 	interpreter();					/* Never returns */
 }
 
+extern void *sbrk(intptr_t increment);
+
 void setup_memory( void )
 {
 	cell free;
@@ -188,8 +190,8 @@ void build_primitives( void )
 	// Most primitives are static in ROM, but these must be built
 	// at initialization.
 	
-	build_named_constant( defend, "{DEFEND}" );
-	build_named_constant( constend, "{CONSTEND}" );
+	build_named_constant( (cell) defend, "{DEFEND}" );
+	build_named_constant( (cell) constend, "{CONSTEND}" );
 }
     
 void bootcompile( void )

@@ -1,10 +1,11 @@
 /*
  * Quick & dirty ADC driver
  */
- 
+
+#include "adc.h" 
 #include "adc_driver.h"
 
-struct adc **adcs;
+static struct adc **adcs;
 
 #define ADCCLK_HZ 5000000
 
