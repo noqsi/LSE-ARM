@@ -5,7 +5,7 @@ int cbuf_put( struct cbuf *b, char c )
 	volatile char *new = b->o + 1;
 	if( new >= b->b + b->size ) new = b->b;	/* wrap */
 	if( new == b->i ) return CBUF_FAIL;	/* full */
-	*new = c;
+	*b->o = c;
 	b->o = new;
 	return 0;				/* success */
 }

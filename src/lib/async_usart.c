@@ -106,9 +106,16 @@ int async_usart_write( int un, char *b, int n )
 
 extern void user_interrupt( void );	/* Called for break or interrupt char */
 
-void usart_interrupt( int un )
+void async_usart_interrupt( int un )
 {
 	struct usart *u = up[un].usart;
+	
+	if( u->csr & (RXBRK|FRAME)) {	/* either might indicate a break */
+		u->cr = RSTRX | RSTSTA;
+		u->cr = RXEN;
+		cbuf_clear( up[un].rxbuf );	/* clear any existing input */
+		user_interrupt();
+	}
 		
 	if( u->csr & RXRDY ) {		/* have a character */
 		char c =  u->rhr;
@@ -118,17 +125,12 @@ void usart_interrupt( int un )
 			(void) cbuf_put( up[un].rxbuf, c);	/* ignore errors for now */
 		}
 	}
+
 	if( u->csr & TXRDY ) {		/* have a character */
 		int c =  cbuf_get( up[un].txbuf );
 		
 		if( c == CBUF_FAIL ) u->idr = TXRDY;		/* Empty, stop output */
 		else u->thr = c;
-	}
-	else {				/* assume break or error */
-		u->cr = RSTRX | RSTSTA;
-		u->cr = RXEN;
-		cbuf_clear( up[un].rxbuf );	/* clear any existing input */
-		user_interrupt();
 	}
 }
 

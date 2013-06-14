@@ -1,7 +1,8 @@
 /* $Id$ */
 
 /*
-    Copyright 2004, 2005, 2006, 2009 John P. Doty and Matthew P. Wampler-Doty
+    Copyright 2004, 2005, 2006, 2009, 2013
+     John P. Doty and Matthew P. Wampler-Doty
 
     This file is part of LSE-ARM.
 
@@ -80,7 +81,7 @@ extern cell FlowPrompt;		/* line prompt character */
 // #define CONSTMEM_DIM	3000
 #define CBUF_DIM	160
 #define STRINGBUF_DIM	200
-#define RESERVE		1600	// Cells to reserve for C stack and heap
+#define RESERVE		1200	// Cells to reserve for C stack and heap
 
 /*
  * Primitive functions
@@ -112,12 +113,13 @@ char *cstring( char *b, int n );
 
 /* other inter-source links */
 
-void interrupt( int sig );
+void interrupt( int sig ) __attribute__ ((noreturn));
 void put_c_string( char *s );
 void copy_static( void );
 void put_hex( unsigned x );
 void primitive_io_abort( void );
 int char_ready( void );
+void writechar( char c );
 
 /*
  * $Log$
