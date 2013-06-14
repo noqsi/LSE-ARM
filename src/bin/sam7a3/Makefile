@@ -20,14 +20,11 @@ ELF_FILE = lse-sam7a3.elf
 lse-sam7a3.elf:  $(LDFILE) lse-sam7a3.o
 	arm-elf-gcc -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) lse-sam7a3.o $(LIBS)
 
-upload: lse-sam7a3.elf /tmp/LCK..openocd
-	echo "reset; halt; flash write_image lse-sam7a3.elf 0x100000; reset;" \
-	 | telnet localhost 4444 \
-	|| sleep 15
-
-/tmp/LCK..openocd:
-	touch /tmp/LCK..openocd
-	(openocd 2>openocd.log; rm /tmp/LCK..openocd) & sleep 2
+upload: $(ELF_FILE)
+	openocd -d0 --file=openocd.cfg \
+		-c 'init;init;arm7_9 fast_memory_access enable' \
+		-c 'halt;flash write_image $(ELF_FILE) 0x100000;reset' \
+		-c 'shutdown'
 
 clean:
 	rm -f *.o *.elf openocd.log

@@ -21,16 +21,17 @@ void lse_main( void );
 void copy_static( void );
 
 /*
+Stuff to compile from flash on startup.
+*/
+
+extern char init_lse[];
+char * const init_source[] = {init_lse, "1 doPrompt !\n", 0};
+
+/*
 Let everyone know what the master clock frequency is.
 */
 
 const unsigned mck_hz = 18432000;
-
-/*
-Provide an "application". Placeholder.
-*/
-
-char app_lse[] = "1 doPrompt !\n";
 
 /*
 A little custom feature is to blink a light at 1 hz.
@@ -66,6 +67,7 @@ Provide I/O primitives.
 char readchar( void ){ return usart_getc( 0 ); }
 
 void writechar( char c ){ usart_putc( 0, c ); }
+int char_ready( void){ return 1; } // Stub: no tasking
 
 /*
 We're using interrupts from two devices on the system controller, so we need
@@ -175,7 +177,9 @@ void app_main()
 	copy_static();			/* Need to do this before I/O init */
 	usart_list[0].usart = DBGU;	/* Use the debug unit for serial IO */
 	usart_list[0].baud = 115200;
-	usart_list[0].flags = UF_BREAK;	/* Interrupt on break from terminal */
+	usart_list[0].flags = 
+		UF_BREAK |	/* Interrupt on break from terminal */
+		UF_CR;		/* Allow CR as end of line */
 	usart_init( usart_list, USARTS );
 	init_pit( PIT, TICK_HZ );
 	on_tick = blink; 
