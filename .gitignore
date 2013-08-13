@@ -1,0 +1,5 @@
+*.o
+*.elf
+*.a
+# compiler temporary file
+src/lib/init_lse.txt
