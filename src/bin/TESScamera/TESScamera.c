@@ -23,15 +23,12 @@ void SeqPrimitives( void );
 Let everyone know what the master clock frequency is.
 */
 
-#ifdef EKBOARD	/* Atmel dev board, not the real TESS hardware */
+#define MAINCLK 10000000	/* 10 MHz */
+#define PLLDIV	1
+#define PLLMUL	12
+#define PRESCALE 2
 
-const unsigned mck_hz = 18432000;
-
-#else /* TESS hardware uses a faster oscillator */
-
-const unsigned mck_hz = 29491200;
-
-#endif
+const unsigned mck_hz = (MAINCLK/(PLLDIV*(1<<PRESCALE)))*PLLMUL;
 
 /*
 List the source "files" to read at initialization.
@@ -96,45 +93,52 @@ get no second chance short of a processor reset!
 
 	watchdog_disable();
 	
-#ifdef EKBOARD	/* Atmel dev board, not the real TESS hardware */
 
 /* 
 
-Suitable oscillator setup for AT91SAM7X-EK eval card. The main oscillator is
-18.432 MHz. Use 0x40 for OSCOUNT because that's what the ROM code seems to use,
-and I have no better info.
-
-*/
-
-	PMC->mor = MOSCEN | OSCOUNT(0x40);
-
-	while( !(PMC->sr & MOSCS));	/* wait for main osc stability */
-
-#else
-
-/* 
-
-Suitable oscillator setup for the TESS Interface board. The external oscillator
-is 29.4912 MHz.
+Suitable oscillator setup for the TESS RRU. The external oscillator
+is 10 MHz.
 
 */
 
 	PMC->mor = OSCBYPASS;
 
-#endif
-
 /*
-Select the main clock, straight through. If you want something else
-you'll need to fiddle with PRES and/or the PLL.
+
+Program the PLL
+
 */
 
-	PMC->mckr = CSS_MAIN;
+	PMC->pllr = DIV(PLLDIV) | PLLCOUNT(63) | MUL(PLLMUL);
+	
+	while( !(PMC->sr & LOCK));	/* wait for PLL stability */
+	
+/*
+
+Prescale if necessary.
+
+*/
+
+#if PRESCALE
+
+	PMC->mckr = PRES(PRESCALE);
+	
+	while( !(PMC->sr & MCKRDY));	/* wait for prescaler */
+	
+#endif
+	
+
+/*
+Select the PLL clock.
+*/
+
+	PMC->mckr |= CSS_PLL;
 
 /*
 Turn on peripheral clocks, as needed.
 */
 
-	PMC->pcer = bit(US0_ID);	/* USART0 */
+	PMC->pcer = 0xffffffff;	/* All on for dev */
 
 /*
 Configure IO pins here. Other peripheral configuration can happen in drivers,
@@ -143,17 +147,14 @@ for clarity and to avoid conflict.
 */
 
 	PIOA->asr = 0x3;	/* enable TXD0, RXD0 */
-	PIOA->pdr = 0x3;	/* relinquish pins to USART0 */
-	PIOA->oer = 0x63002;	/* enable output on TXD0, DS0, DS8, DCK, DD */
-	PIOB->oer = 0x4fc0000;	/* enable address lines on Port B*/
+	PIOA->bsr = 0x49e00000; /* programmable clocks, SPI1 */
+	PIOA->pdr = 0x49e00003;	/* relinquish pins to peripherals */
+	PIOA->sodr = 0x2006fffc; /* initialize bitbang outputs to 1 */
+	PIOA->oer = 0x2006fffc;	/* enable bitbang outputs */
+	PIOB->oer = 0x04fc0000;	/* enable address lines on Port B */
 
 	PIOA->pudr = 0x7fffffff;	/* get rid of pull up resistors on Port A */
 	PIOB->pudr = 0x7fffffff;	/* get rid of pull up resistors on Port B */	
-//	PIOB->oer = 0x780000;	/* eval kit LED's */
-//	PIOB->sodr = 0x500000;	
-//	PIOB->codr = 0x280000;
-	
-//	for(;;); /* debug */
 
 /*
 Set up to dispatch interrupts to the error handler, so that once we start turning
@@ -201,39 +202,4 @@ void app_main()
 	SeqPrimitives();	/* setup the seq words */
 	lse_main();
 }
-
-/*
- * $Log$
- * Revision 1.4  2010-09-06 20:33:57  jpd
- * Raise baud to 115200
- *
- * Revision 1.3  2010-06-10 17:53:06  jpd
- * Completed interrupt infrastructure.
- * Periodic timer interrupt working on SAM7A3.
- * Commented out some unnecessary definitions.
- * Added ability to display free memory.
- *
- * Revision 1.2  2010-06-08 20:59:57  jpd
- * Update for interrupts.
- *
- * Revision 1.1  2010-06-07 00:39:01  jpd
- * Massive reorganization of source tree.
- *
- * Revision 1.4  2010-06-04 18:13:17  jpd
- * Update build for multiple targets.
- *
- * Revision 1.3  2009-03-26 02:26:04  jpd
- * Init seq words.
- * Fix ambiguous stack op.
- *
- * Revision 1.2  2009-03-26 01:26:22  jpd
- * Better factoring.
- *
- * Revision 1.1  2009-03-23 02:42:04  jpd
- * Version for TESS hardware.
- *
- * Revision 1.1  2009-03-14 22:58:06  jpd
- * Can now run LSE in an ARM SAM7X!
- *
- */
 

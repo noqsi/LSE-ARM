@@ -129,6 +129,8 @@ Enable reset via NRST pin.
 Turn on peripheral clocks, as needed.
 */
 
+        PMC->pcer = 0xffffffff;         /* for dev, turn 'em all on */
+
 
 /*
 Configure IO pins here. Other peripheral configuration can happen in drivers,

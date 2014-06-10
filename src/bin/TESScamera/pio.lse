@@ -1,0 +1,20 @@
+# PIO Base
+
+\ fffff400 PIOA :constant
+\ fffff600 PIOB :constant
+
+# The following all take PIO base, yield addr of register
+
+PIO_PER : \ 0 +
+PIO_PDR : \ 4 +
+PIO_PSR : \ 8 +
+PIO_OER : \ 10 +
+PIO_ODR : \ 14 +
+PIO_OSR : \ 18 +
+PIO_SODR : \ 30 +
+PIO_CODR : \ 34 +
+PIO_ODSR : \ 38 +
+PIO_PDSR : \ 3C +
+PIO_ASR : \ 70 +
+PIO_BSR : \ 74 +
+PIO_ABSR : \ 78 +

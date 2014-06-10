@@ -1,0 +1,19 @@
+# bits base ?! yields nothing
+# If flag is true, set bits on PIO port at base
+# otherwise clear them
+
+?! : PIO_CODR !
+?! : then PIO_SODR !
+
+# v n LED! yields nothing
+# set LED based on v (zero or nozero)
+# n is the PIOA bit number
+
+LED! : bit swap 0= PIOA ?!
+
+# v GREEN! yields nothing
+# Go dark if v is 0, bright otherwise
+
+GREEN! : 2 LED!
+RED! : 3 LED!
+YELLOW! : 4 LED!

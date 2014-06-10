@@ -1,0 +1,41 @@
+# ccd chan ccdz yields chan cc
+# Change human CCD numbers 1-4 to hardware 0-3
+badccd : " CCD number must be in range [1,4]" ,t nl abort
+ccdz : 1 -		# base CCD number on 1
+ccdz : dup 5 > then badccd
+ccdz : swap dup 1 < then badccd
+
+# val chan ds !dac yields nothing
+# ds are DAC select bits
+# val and chan are sent to the DAC
+
+# val ccd chan !vida yields nothing
+# val ccd chan !vidb yields nothing
+# val ccd chan !iface yields nothing
+!vida : ccdz (<<) !dac
+!vidb : ccdz (<<) 1 | !dac
+!iface : ccdz \ 10 | !dac
+
+# The following have the pattern:
+# val ccd f yields nothing
+
+!PP : 0 !iface	# parallel +
+!PN : 1 !iface	# parallel -
+!SP : 2 !iface	# serial
+!SN : 3 !iface
+!RP : 4 !iface	# reset
+!RN : 5 !iface
+!IDP : 6 !iface # input diode
+!IDN : 7 !iface
+!OG : 0 !vida	# output gate
+!IG1 : 1 !vida	# input gate 1
+!IG2 : 2 !vida	# input gate 2
+!SCP : 3 !vida	# scupper
+!RD : 4 !vida	# reset drain
+!BS : 5 !vida	# backside
+!SUB : 6 !vida	# substrate
+!DR-A : 0 !vidb	# drain
+!DR-B : 1 !vidb
+!DR-C : 2 !vidb
+!DR-D : 3 !vidb
+

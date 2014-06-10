@@ -1,0 +1,35 @@
+# a n << yields b
+# shift a left n bits
+(<<) : 2 *
+<< : (<<) iterate
+
+# a n >> yields b
+# shift a right n bits
+# note that this is "arithmetic", so it's strange for negative numbers
+(>>) : 2 /
+>> : (>>) iterate
+
+# bit shifts should be primitive
+
+# n bit yields a
+# return a cell with bit n set
+bit : 1 swap <<
+
+# n mask yields a
+# return a cell with the n LSB's set
+(mask) : 2 * 1 +
+mask : 0 swap (mask) iterate
+
+# a n m field> yields b
+# extract an m bit field with LSB n from a
+# the result has its LSB at bit 0
+$field :variable
+
+field> : swap dup $field ! swap mask swap << & $field @ >>
+
+# a n m >field yields b
+# Take a as contents of a field with m bits starting at bit n
+# Yield a shifted and masked accordingly
+
+>field : $field ! swap $field @ mask & swap <<
+

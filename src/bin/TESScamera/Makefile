@@ -1,4 +1,3 @@
-# $Id$
 
 AS = arm-elf-as
 CC = arm-elf-gcc
@@ -23,6 +22,16 @@ UPLOAD =	openocd -d0 --file=openocd.cfg \
 	sed -e '/^#/d' -e '/^$$/d' $< >$@
 
 TESSTUFF = lse_seq.o sequencer.o
+
+TESSc80.elf:  $(LDFILE) $(TESSTUFF) TESScamera.o app_lse_c80.o stamp.o
+	$(CC) -T$(LDFILE) $(LDFLAGS) -o $@ $(BOOT) TESScamera.o \
+	$(TESSTUFF) $(LIBS) app_lse_c80.o stamp.o
+	rm stamp.lse
+
+app_lse_c80.o : c80.txt
+
+c80.txt : bitfields.lse pio.lse LEDs.lse
+	sed -e '/^#/d' -e '/^$$/d' $^ >$@
 
 # The version that runs on the EK board
 # For now, use the c20 version of LSE code
